@@ -4,19 +4,6 @@ import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
 
 const EXAMPLE_IP = '8.8.8.8'
 
-interface GeoJsResponse {
-  ip?: string
-  country?: string
-  country_code?: string
-  region?: string
-  city?: string
-  organization_name?: string
-  latitude?: string
-  longitude?: string
-  timezone?: string
-  error?: string
-}
-
 interface IpInfo {
   ip?: string
   type?: string
@@ -43,29 +30,148 @@ function detectIpType(value: string): string | undefined {
   return undefined
 }
 
-async function resolveHost(host: string): Promise<string> {
-  const trimmed = host.trim()
-  if (isIpAddress(trimmed)) return trimmed
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return (await res.json()) as T
+}
 
-  const res = await fetch(
-    `https://dns.google/resolve?name=${encodeURIComponent(trimmed)}&type=A`,
-  )
-  if (!res.ok) throw new Error('域名解析失败')
-  const data = (await res.json()) as {
+async function resolveViaDns(
+  url: string,
+  init?: RequestInit,
+): Promise<string> {
+  const data = await fetchJson<{
     Answer?: Array<{ type: number; data: string }>
+    Status?: number
+  }>(url, init)
+  if (data.Status !== 0 || !data.Answer?.length) {
+    throw new Error('无法解析该域名')
   }
-  const ip = data.Answer?.find((item) => item.type === 1)?.data
+  const ip = data.Answer.find((item) => item.type === 1)?.data
   if (!ip) throw new Error('无法解析该域名')
   return ip
 }
 
-function mapGeoJs(data: GeoJsResponse): IpInfo {
+async function resolveHost(host: string): Promise<string> {
+  const trimmed = host.trim()
+  if (isIpAddress(trimmed)) return trimmed
+
+  const encoded = encodeURIComponent(trimmed)
+  const resolvers = [
+    () =>
+      resolveViaDns(
+        `https://dns.alidns.com/resolve?name=${encoded}&type=A`,
+      ),
+    () =>
+      resolveViaDns(
+        `https://cloudflare-dns.com/dns-query?name=${encoded}&type=A`,
+        { headers: { Accept: 'application/dns-json' } },
+      ),
+  ]
+
+  let lastError: Error | null = null
+  for (const resolve of resolvers) {
+    try {
+      return await resolve()
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error('域名解析失败')
+    }
+  }
+  throw lastError ?? new Error('域名解析失败')
+}
+
+function formatCountry(name?: string, code?: string): string | undefined {
+  if (!name && !code) return undefined
+  if (name && code) return `${name} (${code})`
+  return name ?? code
+}
+
+async function lookupViaIpSb(ip?: string): Promise<IpInfo> {
+  const url = ip
+    ? `https://api.ip.sb/geoip/${encodeURIComponent(ip)}`
+    : 'https://api.ip.sb/geoip'
+  const data = await fetchJson<{
+    ip?: string
+    country?: string
+    country_code?: string
+    region?: string
+    city?: string
+    isp?: string
+    organization?: string
+    latitude?: number
+    longitude?: number
+    timezone?: string
+  }>(url)
+  if (!data.ip) throw new Error('未获取到 IP 信息')
   return {
     ip: data.ip,
-    type: data.ip ? detectIpType(data.ip) : undefined,
-    country: data.country_code
-      ? `${data.country ?? ''} (${data.country_code})`.trim()
-      : data.country,
+    type: detectIpType(data.ip),
+    country: formatCountry(data.country, data.country_code),
+    region: data.region,
+    city: data.city,
+    isp: data.isp,
+    org: data.organization,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    timezone: data.timezone,
+  }
+}
+
+async function lookupViaIpApiCo(ip?: string): Promise<IpInfo> {
+  const url = ip
+    ? `https://ipapi.co/${encodeURIComponent(ip)}/json/`
+    : 'https://ipapi.co/json/'
+  const data = await fetchJson<{
+    ip?: string
+    error?: boolean
+    reason?: string
+    country_name?: string
+    country_code?: string
+    region?: string
+    city?: string
+    org?: string
+    latitude?: number
+    longitude?: number
+    timezone?: string
+  }>(url)
+  if (data.error) throw new Error(data.reason || '查询失败')
+  if (!data.ip) throw new Error('未获取到 IP 信息')
+  return {
+    ip: data.ip,
+    type: detectIpType(data.ip),
+    country: formatCountry(data.country_name, data.country_code),
+    region: data.region,
+    city: data.city,
+    isp: data.org,
+    org: data.org,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    timezone: data.timezone,
+  }
+}
+
+async function lookupViaGeoJs(ip?: string): Promise<IpInfo> {
+  const url = ip
+    ? `https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`
+    : 'https://get.geojs.io/v1/ip/geo.json'
+  const data = await fetchJson<{
+    ip?: string
+    error?: string
+    country?: string
+    country_code?: string
+    region?: string
+    city?: string
+    organization_name?: string
+    latitude?: string
+    longitude?: string
+    timezone?: string
+  }>(url)
+  if (data.error) throw new Error(data.error)
+  if (!data.ip) throw new Error('未获取到 IP 信息')
+  return {
+    ip: data.ip,
+    type: detectIpType(data.ip),
+    country: formatCountry(data.country, data.country_code),
     region: data.region,
     city: data.city,
     isp: data.organization_name,
@@ -74,6 +180,29 @@ function mapGeoJs(data: GeoJsResponse): IpInfo {
     longitude: data.longitude ? Number(data.longitude) : undefined,
     timezone: data.timezone,
   }
+}
+
+async function lookupGeo(ip?: string): Promise<IpInfo> {
+  const providers = [lookupViaIpSb, lookupViaIpApiCo, lookupViaGeoJs]
+  let lastError: Error | null = null
+
+  for (const provider of providers) {
+    try {
+      return await provider(ip)
+    } catch (e) {
+      lastError =
+        e instanceof TypeError && e.message === 'Failed to fetch'
+          ? new Error('网络请求失败，接口可能无法访问')
+          : e instanceof Error
+            ? e
+            : new Error('查询失败')
+    }
+  }
+
+  throw (
+    lastError ??
+    new Error('所有查询接口均不可用，请检查网络或稍后重试')
+  )
 }
 
 export default function IpLookup() {
@@ -88,16 +217,8 @@ export default function IpLookup() {
     setInfo(null)
     try {
       const query = target ?? ip.trim()
-      const resolved = query ? await resolveHost(query) : ''
-      const url = resolved
-        ? `https://get.geojs.io/v1/ip/geo/${encodeURIComponent(resolved)}.json`
-        : 'https://get.geojs.io/v1/ip/geo.json'
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('查询失败')
-      const data = (await res.json()) as GeoJsResponse
-      if (data.error) throw new Error(data.error)
-      if (!data.ip) throw new Error('未获取到 IP 信息')
-      const mapped = mapGeoJs(data)
+      const resolved = query ? await resolveHost(query) : undefined
+      const mapped = await lookupGeo(resolved)
       setInfo(mapped)
       setIp(mapped.ip ?? query)
     } catch (e) {
@@ -156,8 +277,8 @@ export default function IpLookup() {
       )}
 
       <Alert type="info">
-        IP 查询通过 GeoJS 接口完成（支持浏览器直连）。域名会先经 Google DNS 解析为 IP
-        后再查询，仅发送查询目标地址，不上传本地其他数据。
+        IP 查询在浏览器中直连第三方接口（ip.sb / ipapi.co / GeoJS
+        自动回退），域名解析使用阿里 DNS。仅发送查询目标，不上传本地其他数据。
       </Alert>
     </ToolPanel>
   )
