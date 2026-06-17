@@ -13,19 +13,14 @@
 ## 快速开始
 
 ```bash
-npm install
-npm run dev      # 开发服务器，默认 http://localhost:5173
-npm run build    # 生产构建，输出到 dist/
-npm run preview  # 本地预览构建结果，默认 http://localhost:4173
+npm install -g pnpm
+pnpm install
+pnpm run dev      # 开发服务器，默认 http://localhost:5173
+pnpm run build    # 生产构建，输出到 dist/
+pnpm run preview  # 本地预览构建结果，默认 http://localhost:4173
 ```
 
-## 开发端口说明
-
-**为什么是 5173？**
-
-本项目使用 [Vite](https://vite.dev/) 作为开发服务器。`5173` 是 Vite 的默认开发端口（预览模式默认端口为 `4173`），无需额外配置即可直接运行。
-
-**如何自定义端口？**
+**P自定义端口？**
 
 任选一种方式即可：
 
@@ -48,14 +43,14 @@ export default defineConfig({
 **方式二：命令行临时指定（不改配置文件）**
 
 ```bash
-npm run dev -- --port 3000
-npm run preview -- --port 8080
+pnpm run dev -- --port 3000
+pnpm run preview -- --port 8080
 ```
 
 **方式三：指定监听地址**
 
 ```bash
-npm run dev -- --host 0.0.0.0 --port 3000
+pnpm run dev -- --host 0.0.0.0 --port 3000
 ```
 
 `--host 0.0.0.0` 。
@@ -67,8 +62,8 @@ npm run dev -- --host 0.0.0.0 --port 3000
 ### 部署前检查
 
 ```bash
-npm run build
-npm run preview   # 本地验证 dist/ 是否正常
+pnpm run build
+pnpm run preview   # 本地验证 dist/ 是否正常
 ```
 
 ## 技术栈
