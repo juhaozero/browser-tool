@@ -1,3 +1,5 @@
+/** 浏览器端文件下载工具，通过临时 <a> 标签触发 */
+
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

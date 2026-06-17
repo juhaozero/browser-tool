@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'browser-tool-theme'
 
+/** 深色/浅色主题切换，偏好持久化到 localStorage */
 export function useTheme() {
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -17,6 +18,7 @@ export function useTheme() {
   return { dark, toggle: () => setDark((v) => !v) }
 }
 
+/** 写入剪贴板，失败时静默返回 false */
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text)
@@ -26,6 +28,7 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/** 使用 Web Crypto 计算文本/文件哈希（SHA 系列） */
 export async function hashText(algorithm: AlgorithmIdentifier, text: string): Promise<ArrayBuffer> {
   const data = new TextEncoder().encode(text)
   return crypto.subtle.digest(algorithm, data)
@@ -54,6 +57,7 @@ export function formatJson(value: unknown, indent = 2): string {
 export function generateUuidV4(): string {
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
+  // RFC 4122：设置 version(4) 与 variant 位
   bytes[6] = (bytes[6] & 0x0f) | 0x40
   bytes[8] = (bytes[8] & 0x3f) | 0x80
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
@@ -118,6 +122,7 @@ export function toConstantCase(text: string): string {
   return toSnakeCase(text).toUpperCase()
 }
 
+/** 简易行级 diff，输出 unified diff 风格（+ 新增 / - 删除） */
 export function simpleDiff(a: string, b: string): string {
   const aLines = a.split('\n')
   const bLines = b.split('\n')
@@ -195,6 +200,7 @@ export function hslToRgb(h: number, s: number, l: number): { r: number; g: numbe
   }
 }
 
+/** 解码 JWT 单段（Header 或 Payload），Base64URL → JSON */
 export function decodeJwtPart(part: string): unknown {
   const padded = part.replace(/-/g, '+').replace(/_/g, '/')
   const json = atob(padded.padEnd(padded.length + ((4 - (padded.length % 4)) % 4), '='))

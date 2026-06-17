@@ -11,12 +11,17 @@ interface ImageConverterProps {
   supportsQuality?: boolean
 }
 
+/** 缩放插值档位，映射到 Canvas imageSmoothingQuality */
 const SPEED_OPTIONS = [
   { value: 'low', label: '快速（低质量插值）' },
   { value: 'medium', label: '均衡' },
   { value: 'high', label: '高质量（较慢）' },
 ]
 
+/**
+ * 通用图片格式转换组件
+ * 各 ImageToXxx 入口通过不同 mime/ext 参数复用此组件
+ */
 export default function ImageConverter({
   mime,
   ext,
@@ -170,6 +175,7 @@ export default function ImageConverter({
   )
 }
 
+// 以下导出供独立路由懒加载，每个文件仅 re-export default
 export function ImageToPng() {
   return <ImageConverter mime="image/png" ext="png" label="PNG" supportsQuality={false} />
 }

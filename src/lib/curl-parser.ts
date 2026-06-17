@@ -1,3 +1,7 @@
+/**
+ * cURL 命令解析与多语言代码生成
+ * 支持常见 -X / -H / -d 参数，多行续行符会被展平
+ */
 export interface ParsedCurl {
   method: string
   url: string

@@ -1,3 +1,8 @@
+/**
+ * JWT HMAC 签名（HS256 / HS384 / HS512）
+ * 使用 Web Crypto API，密钥不出浏览器
+ */
+
 function base64UrlEncode(data: string | ArrayBuffer): string {
   const bytes =
     typeof data === 'string'

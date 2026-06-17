@@ -11,9 +11,11 @@ interface ToolLayoutProps {
   children: ReactNode
 }
 
+/** 工具页通用外壳：标题、返回链接、隐私提示条 */
 export function ToolLayout({ tool, children }: ToolLayoutProps) {
   const Icon = tool.icon
 
+  // 记录最近使用的工具，供首页返回时滚动定位
   useEffect(() => {
     setLastToolId(tool.id)
   }, [tool.id])
@@ -23,7 +25,7 @@ export function ToolLayout({ tool, children }: ToolLayoutProps) {
       <div>
         <Link
           to="/"
-          state={{ scrollToTool: tool.id }}
+          state={{ scrollToTool: tool.id }} // 通过路由 state 传递滚动目标
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] transition hover:text-[var(--accent)]"
         >
           <ArrowLeft size={16} />

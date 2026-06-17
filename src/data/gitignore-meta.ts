@@ -1,10 +1,10 @@
 export type GitignoreCategory = 'language' | 'framework' | 'editor' | 'os' | 'env'
 
 export interface GitignoreTemplateMeta {
-  name: string
+  name: string // 与 GitHub 官方模板名一致
   label: string
   category: GitignoreCategory
-  tags: string[]
+  tags: string[] // 搜索关键词
 }
 
 export const GITIGNORE_CATEGORIES: { id: GitignoreCategory; label: string }[] = [
@@ -70,6 +70,7 @@ export function getMetaMap(): Map<string, GitignoreTemplateMeta> {
   return new Map(GITIGNORE_META.map((m) => [m.name, m]))
 }
 
+/** 从 GitHub 官方 API 拉取全部模板名称 */
 export async function fetchTemplateNames(): Promise<string[]> {
   const res = await fetch('https://api.github.com/gitignore/templates')
   if (!res.ok) throw new Error('获取模板列表失败')
@@ -83,6 +84,7 @@ export async function fetchTemplateContent(name: string): Promise<string> {
   return data.source
 }
 
+/** 合并多个模板，每段以注释头分隔 */
 export async function mergeTemplates(names: string[]): Promise<string> {
   const parts: string[] = []
   for (const name of names) {

@@ -4,6 +4,10 @@ import { Loader2 } from 'lucide-react'
 import { getToolById } from '@/data/tools'
 import { ToolLayout } from '@/components/ToolLayout'
 
+/**
+ * 通用工具页：根据 URL 中的 toolId 动态加载对应工具组件
+ * 工具组件通过 React.lazy 分包，Suspense 负责加载态
+ */
 export default function ToolPage() {
   const { toolId } = useParams<{ toolId: string }>()
   const tool = toolId ? getToolById(toolId) : undefined

@@ -1,3 +1,11 @@
+/**
+ * 工具注册表 — 全站工具与分类的单一数据源
+ *
+ * 扩展新工具：
+ * 1. 在 src/tools/ 创建组件（default export）
+ * 2. 在下方 tools 数组追加一条记录（component 使用 lazy）
+ * 3. 路由 /tool/:toolId 会自动生效，无需改 App.tsx
+ */
 import { lazy } from 'react'
 import {
   Braces,
@@ -311,6 +319,7 @@ export const tools: ToolDefinition[] = [
   },
 ]
 
+/** 根据路由参数查找工具定义，未找到时 ToolPage 会重定向首页 */
 export function getToolById(id: string): ToolDefinition | undefined {
   return tools.find((t) => t.id === id)
 }

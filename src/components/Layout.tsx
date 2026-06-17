@@ -1,9 +1,10 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Wrench, Menu, X } from 'lucide-react'
+import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '@/lib/utils'
 import { categories, tools } from '@/data/tools'
 
+/** 全局布局：顶栏 + 首页侧栏分类导航 + 主内容区（Outlet） */
 export function Layout() {
   const { dark, toggle } = useTheme()
   const location = useLocation()
@@ -44,6 +45,7 @@ export function Layout() {
           </div>
         </div>
 
+        {/* 非首页时，移动端顶栏下方展示分类快捷入口 */}
         {!isHome && (
           <div className="border-t border-[var(--border)] md:hidden">
             <nav className="flex gap-1 overflow-x-auto px-4 py-2">
@@ -63,6 +65,7 @@ export function Layout() {
       </header>
 
       <div className="mx-auto flex max-w-7xl gap-8 px-4 py-6 sm:px-6">
+        {/* 首页左侧分类导航，桌面端显示 */}
         {isHome && (
           <aside className="hidden w-52 shrink-0 md:block">
             <nav className="sticky top-20 space-y-1">

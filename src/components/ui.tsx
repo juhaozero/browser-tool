@@ -1,3 +1,7 @@
+/**
+ * 工具页通用 UI 组件
+ * ToolPanel / ToolSection 为各工具提供一致的布局结构
+ */
 import type { ReactNode } from 'react'
 
 interface ToolPanelProps {

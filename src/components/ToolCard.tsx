@@ -5,9 +5,10 @@ import { setLastToolId, toolCardId } from '@/lib/last-tool'
 
 interface ToolCardProps {
   tool: ToolDefinition
-  highlighted?: boolean
+  highlighted?: boolean // 从工具页返回时短暂高亮
 }
 
+/** 首页工具卡片，id 用于 scrollIntoView 定位 */
 export function ToolCard({ tool, highlighted }: ToolCardProps) {
   const Icon = tool.icon
 

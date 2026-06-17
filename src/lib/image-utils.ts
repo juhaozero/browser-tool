@@ -1,9 +1,14 @@
+/**
+ * 图片处理工具函数
+ * 基于 Canvas API 在本地完成缩放与格式转换，不依赖服务端
+ */
+
 export interface ImageConvertOptions {
-  quality?: number
-  scalePercent?: number
+  quality?: number // 0~1，仅对有损格式（JPEG/WebP/AVIF）生效
+  scalePercent?: number // 相对原图缩放百分比
   maxWidth?: number
   maxHeight?: number
-  smoothingQuality?: ImageSmoothingQuality
+  smoothingQuality?: ImageSmoothingQuality // 缩放插值质量，影响速度与清晰度
 }
 
 export function loadImage(file: File): Promise<HTMLImageElement> {
@@ -36,6 +41,7 @@ export function canvasToBlob(
   })
 }
 
+/** 根据缩放比例与最大宽高约束计算输出尺寸 */
 function resolveDimensions(
   img: HTMLImageElement,
   options: ImageConvertOptions,
@@ -101,6 +107,7 @@ export async function convertImageFormat(
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = smoothingQuality
 
+  // JPEG 不支持透明，先铺白底
   if (mime === 'image/jpeg') {
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, w, h)
@@ -109,6 +116,7 @@ export async function convertImageFormat(
   return canvasToBlob(canvas, mime, quality)
 }
 
+/** 生成正方形 favicon，输出 PNG（浏览器原生 ICO 编码较复杂，此处简化） */
 export async function imageToIco(
   file: File,
   size = 32,

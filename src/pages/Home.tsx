@@ -5,6 +5,7 @@ import { categories, getToolById, tools } from '@/data/tools'
 import { ToolCard } from '@/components/ToolCard'
 import { getLastToolId, toolCardId } from '@/lib/last-tool'
 
+/** 首页：工具搜索、分类筛选、返回时定位上次使用的工具 */
 export default function Home() {
   const [searchParams] = useSearchParams()
   const location = useLocation()
@@ -13,6 +14,7 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const [highlightId, setHighlightId] = useState<string | null>(null)
 
+  // 滚动目标：优先用路由 state（从工具页返回），否则读 sessionStorage
   const scrollTarget =
     (location.state as { scrollToTool?: string } | null)?.scrollToTool ?? getLastToolId()
 

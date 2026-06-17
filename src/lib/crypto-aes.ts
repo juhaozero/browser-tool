@@ -1,3 +1,8 @@
+/**
+ * AES-256-GCM 加解密
+ * 密钥通过 PBKDF2 从密码派生，密文以 JSON 信封格式存储 salt/iv/ciphertext
+ */
+
 function toBase64(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
 }
@@ -24,6 +29,7 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
   )
 }
 
+/** 加密结果信封，三个字段均为 Base64 编码 */
 export interface AesEnvelope {
   salt: string
   iv: string
@@ -32,7 +38,7 @@ export interface AesEnvelope {
 
 export async function aesEncrypt(plaintext: string, password: string): Promise<AesEnvelope> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
-  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const iv = crypto.getRandomValues(new Uint8Array(12)) // GCM 推荐 12 字节 IV
   const key = await deriveKey(password, salt)
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: iv as BufferSource },

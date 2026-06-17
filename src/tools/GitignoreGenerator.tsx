@@ -11,6 +11,7 @@ import {
 } from '@/data/gitignore-meta'
 import { downloadText } from '@/lib/download'
 
+/** 模板项：合并 GitHub 全量列表与本地分类元数据 */
 interface TemplateItem {
   name: string
   label: string

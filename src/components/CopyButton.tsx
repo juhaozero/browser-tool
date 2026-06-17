@@ -3,6 +3,7 @@ import { Check, Copy } from 'lucide-react'
 import { copyText } from '@/lib/utils'
 import { Button } from './ui'
 
+/** 一键复制到剪贴板，成功后短暂切换为「已复制」 */
 interface CopyButtonProps {
   text: string
   label?: string
