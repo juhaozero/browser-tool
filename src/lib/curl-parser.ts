@@ -11,54 +11,116 @@ export interface ParsedCurl {
   formData: Record<string, string>
 }
 
-function readQuotedArg(regex: RegExp, input: string): string[] {
-  const values: string[] = []
-  let match: RegExpExecArray | null
-  const re = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g')
-  while ((match = re.exec(input))) {
-    values.push(match[1] ?? match[2] ?? match[3] ?? '')
+function tokenizeCurlInput(input: string): string[] {
+  const tokens: string[] = []
+  let i = 0
+  while (i < input.length) {
+    const ch = input[i]
+    if (/\s/.test(ch)) {
+      i++
+      continue
+    }
+    if (ch === "'" || ch === '"') {
+      const quote = ch
+      i++
+      let val = ''
+      while (i < input.length && input[i] !== quote) val += input[i++]
+      if (i < input.length) i++
+      tokens.push(val)
+      continue
+    }
+    let val = ''
+    while (i < input.length && !/\s/.test(input[i])) val += input[i++]
+    tokens.push(val)
   }
-  return values
+  return tokens
+}
+
+const FLAGS_WITH_VALUE = new Set([
+  '-X', '--request',
+  '-H', '--header',
+  '-d', '--data', '--data-raw', '--data-binary', '--data-urlencode',
+  '-F', '--form',
+  '-u', '--user',
+  '--url',
+  '-A', '--user-agent',
+  '-e', '--referer',
+  '-b', '--cookie',
+  '-o', '--output',
+])
+
+const BOOLEAN_FLAGS = new Set([
+  '-s', '-S', '-L', '-k', '-v', '-i', '-I', '-f', '--compressed', '--insecure', '-g', '--globoff',
+])
+
+function isUrlCandidate(token: string): boolean {
+  return !token.startsWith('-') && /^https?:\/\//i.test(token)
+}
+
+function readFlagValue(tokens: string[], index: number): string {
+  return tokens[index] ?? ''
 }
 
 export function parseCurl(input: string): ParsedCurl | string {
   const trimmed = input.trim().replace(/\\\r?\n/g, ' ')
   if (!trimmed.toLowerCase().startsWith('curl')) return '请输入以 curl 开头的命令'
 
+  const tokens = tokenizeCurlInput(trimmed)
+  if (tokens[0]?.toLowerCase() !== 'curl') return '请输入以 curl 开头的命令'
+
   let method = 'GET'
   let url = ''
   const headers: Record<string, string> = {}
-  let body = ''
+  const bodyParts: string[] = []
   const formData: Record<string, string> = {}
 
-  const urlMatch = trimmed.match(/curl\s+(?:'([^']+)'|"([^"]+)"|(\S+))/i)
-  if (urlMatch) url = urlMatch[1] || urlMatch[2] || urlMatch[3] || ''
+  for (let i = 1; i < tokens.length; i++) {
+    const tok = tokens[i]
 
-  const methodMatch = trimmed.match(/-X\s+(\w+)/i)
-  if (methodMatch) method = methodMatch[1].toUpperCase()
-
-  const headerRegex = /-H\s+(?:'([^']+)'|"([^"]+)")/gi
-  let hm: RegExpExecArray | null
-  while ((hm = headerRegex.exec(trimmed))) {
-    const h = hm[1] || hm[2]
-    const idx = h.indexOf(':')
-    if (idx > 0) headers[h.slice(0, idx).trim()] = h.slice(idx + 1).trim()
-  }
-
-  const dataParts = readQuotedArg(/(?:-d|--data(?:-raw)?)\s+(?:'([^']*)'|"([^"]*)"|(\S+))/gi, trimmed)
-  if (dataParts.length) {
-    body = dataParts.join('&')
-    if (method === 'GET') method = 'POST'
-  }
-
-  const formParts = readQuotedArg(/-F\s+(?:'([^']+)'|"([^"]+)"|(\S+))/gi, trimmed)
-  for (const part of formParts) {
-    const idx = part.indexOf('=')
-    if (idx > 0) {
-      formData[part.slice(0, idx)] = part.slice(idx + 1)
+    if (tok === '-X' || tok === '--request') {
+      method = readFlagValue(tokens, ++i).toUpperCase() || method
+      continue
+    }
+    if (tok.startsWith('-X') && tok.length > 2) {
+      method = tok.slice(2).toUpperCase()
+      continue
+    }
+    if (tok === '-H' || tok === '--header') {
+      const h = readFlagValue(tokens, ++i)
+      const idx = h.indexOf(':')
+      if (idx > 0) headers[h.slice(0, idx).trim()] = h.slice(idx + 1).trim()
+      continue
+    }
+    if (/^(-d|--data(?:-(?:raw|binary|urlencode))?)$/.test(tok)) {
+      bodyParts.push(readFlagValue(tokens, ++i))
       if (method === 'GET') method = 'POST'
+      continue
+    }
+    if (tok === '-F' || tok === '--form') {
+      const part = readFlagValue(tokens, ++i)
+      const idx = part.indexOf('=')
+      if (idx > 0) {
+        formData[part.slice(0, idx)] = part.slice(idx + 1)
+        if (method === 'GET') method = 'POST'
+      }
+      continue
+    }
+    if (tok === '--url') {
+      url = readFlagValue(tokens, ++i)
+      continue
+    }
+    if (BOOLEAN_FLAGS.has(tok)) continue
+    if (FLAGS_WITH_VALUE.has(tok)) {
+      i++
+      continue
+    }
+    if (isUrlCandidate(tok)) {
+      url = tok
+      continue
     }
   }
+
+  const body = bodyParts.join('&')
 
   if (!url) return '未能解析 URL'
   const urlError = validateHttpUrl(url)

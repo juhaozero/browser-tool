@@ -59,7 +59,17 @@ pnpm run dev -- --host 0.0.0.0 --port 3000
 
 ## 部署
 
-本项目是纯静态站点。执行 `npm run build` 后，`dist/` 目录即为可部署的完整产物。
+本项目是纯静态站点。执行 `pnpm run build` 后，`dist/` 目录即为可部署的完整产物。
+
+### 子路径部署
+
+默认部署在域名根路径（`/`）。若需挂到子路径（如 `https://example.com/app/`），修改 `.env`：
+
+```bash
+VITE_BASE_PATH=/app/
+```
+
+也可直接改 `src/config/base-path.ts` 中的 `DEFAULT_BASE_PATH`。构建后把 `dist/` 内容放到服务器的 `/app/` 目录，并配置 SPA 回退到 `/app/index.html`。
 
 ### 部署前检查
 
