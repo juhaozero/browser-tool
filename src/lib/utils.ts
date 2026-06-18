@@ -122,22 +122,42 @@ export function toConstantCase(text: string): string {
   return toSnakeCase(text).toUpperCase()
 }
 
-/** 简易行级 diff，输出 unified diff 风格（+ 新增 / - 删除） */
+/** 基于 LCS 的行级 diff，输出 unified diff 风格（+ 新增 / - 删除） */
 export function simpleDiff(a: string, b: string): string {
   const aLines = a.split('\n')
   const bLines = b.split('\n')
-  const result: string[] = []
-  const maxLen = Math.max(aLines.length, bLines.length)
+  const n = aLines.length
+  const m = bLines.length
 
-  for (let i = 0; i < maxLen; i++) {
-    const al = aLines[i]
-    const bl = bLines[i]
-    if (al === bl) {
-      if (al !== undefined) result.push(` ${al}`)
-    } else {
-      if (al !== undefined) result.push(`-${al}`)
-      if (bl !== undefined) result.push(`+${bl}`)
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0))
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      if (aLines[i] === bLines[j]) dp[i][j] = dp[i + 1][j + 1] + 1
+      else dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1])
     }
+  }
+
+  const result: string[] = []
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (aLines[i] === bLines[j]) {
+      result.push(` ${aLines[i]}`)
+      i++
+      j++
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      result.push(`-${aLines[i]}`)
+      i++
+    } else {
+      result.push(`+${bLines[j]}`)
+      j++
+    }
+  }
+  while (i < n) {
+    result.push(`-${aLines[i++]}`)
+  }
+  while (j < m) {
+    result.push(`+${bLines[j++]}`)
   }
   return result.join('\n')
 }

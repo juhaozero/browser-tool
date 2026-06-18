@@ -19,13 +19,47 @@ interface IpInfo {
 
 const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/
 
+function isValidIpv4(value: string): boolean {
+  if (!IPV4_RE.test(value)) return false
+  return value.split('.').every((part) => {
+    const n = Number(part)
+    return Number.isInteger(n) && n >= 0 && n <= 255
+  })
+}
+
+function isValidIpv6(value: string): boolean {
+  if (!/^[\da-f:.]+$/i.test(value)) return false
+  try {
+    new URL(`http://[${value}]`)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function isIpAddress(value: string): boolean {
-  if (IPV4_RE.test(value)) return true
-  return value.includes(':') && /^[\da-f:.]+$/i.test(value)
+  return isValidIpv4(value) || isValidIpv6(value)
+}
+
+function isValidHostname(host: string): boolean {
+  if (!host || host.length > 253) return false
+  if (host.startsWith('.') || host.endsWith('.') || host.includes('..')) return false
+  const labels = host.split('.')
+  return labels.every((label) => {
+    if (label.length === 0 || label.length > 63) return false
+    return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(label)
+  })
+}
+
+/** 校验查询目标，空字符串表示查询本机公网 IP */
+function validateQuery(query: string): string | null {
+  if (!query) return null
+  if (isValidIpv4(query) || isValidIpv6(query) || isValidHostname(query)) return null
+  return '请输入有效的 IP 地址或域名（仅支持字母、数字、连字符和点）'
 }
 
 function detectIpType(value: string): string | undefined {
-  if (IPV4_RE.test(value)) return 'IPv4'
+  if (isValidIpv4(value)) return 'IPv4'
   if (value.includes(':')) return 'IPv6'
   return undefined
 }
@@ -37,9 +71,19 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 async function resolveViaDns(
-  url: string,
+  provider: 'alidns' | 'cloudflare',
+  host: string,
+  recordType: 'A' | 'AAAA',
   init?: RequestInit,
 ): Promise<string> {
+  const encoded = encodeURIComponent(host)
+  const typeParam = recordType === 'A' ? 'A' : 'AAAA'
+  const dnsType = recordType === 'A' ? 1 : 28
+  const url =
+    provider === 'alidns'
+      ? `https://dns.alidns.com/resolve?name=${encoded}&type=${typeParam}`
+      : `https://cloudflare-dns.com/dns-query?name=${encoded}&type=${typeParam}`
+
   const data = await fetchJson<{
     Answer?: Array<{ type: number; data: string }>
     Status?: number
@@ -47,7 +91,7 @@ async function resolveViaDns(
   if (data.Status !== 0 || !data.Answer?.length) {
     throw new Error('无法解析该域名')
   }
-  const ip = data.Answer.find((item) => item.type === 1)?.data
+  const ip = data.Answer.find((item) => item.type === dnsType)?.data
   if (!ip) throw new Error('无法解析该域名')
   return ip
 }
@@ -56,21 +100,21 @@ async function resolveHost(host: string): Promise<string> {
   const trimmed = host.trim()
   if (isIpAddress(trimmed)) return trimmed
 
-  const encoded = encodeURIComponent(trimmed)
-  const resolvers = [
+  const attempts: Array<() => Promise<string>> = [
+    () => resolveViaDns('alidns', trimmed, 'A'),
     () =>
-      resolveViaDns(
-        `https://dns.alidns.com/resolve?name=${encoded}&type=A`,
-      ),
+      resolveViaDns('cloudflare', trimmed, 'A', {
+        headers: { Accept: 'application/dns-json' },
+      }),
+    () => resolveViaDns('alidns', trimmed, 'AAAA'),
     () =>
-      resolveViaDns(
-        `https://cloudflare-dns.com/dns-query?name=${encoded}&type=A`,
-        { headers: { Accept: 'application/dns-json' } },
-      ),
+      resolveViaDns('cloudflare', trimmed, 'AAAA', {
+        headers: { Accept: 'application/dns-json' },
+      }),
   ]
 
   let lastError: Error | null = null
-  for (const resolve of resolvers) {
+  for (const resolve of attempts) {
     try {
       return await resolve()
     } catch (e) {
@@ -212,15 +256,24 @@ export default function IpLookup() {
   const [error, setError] = useState('')
 
   const lookup = async (target?: string) => {
+    const query = target !== undefined ? target : ip.trim()
+
+    if (target !== '') {
+      const validationError = validateQuery(query)
+      if (validationError) {
+        setError(validationError)
+        setInfo(null)
+        return
+      }
+    }
+
     setLoading(true)
     setError('')
     setInfo(null)
     try {
-      const query = target ?? ip.trim()
       const resolved = query ? await resolveHost(query) : undefined
       const mapped = await lookupGeo(resolved)
       setInfo(mapped)
-      setIp(mapped.ip ?? query)
     } catch (e) {
       setError(e instanceof Error ? e.message : '查询失败')
     } finally {
@@ -278,7 +331,7 @@ export default function IpLookup() {
 
       <Alert type="info">
         IP 查询在浏览器中直连第三方接口（ip.sb / ipapi.co / GeoJS
-        自动回退），域名解析使用阿里 DNS。仅发送查询目标，不上传本地其他数据。
+        自动回退），域名解析依次尝试 A / AAAA 记录（阿里 DNS、Cloudflare DNS）。
       </Alert>
     </ToolPanel>
   )

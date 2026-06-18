@@ -21,6 +21,8 @@ export default function JwtGenerator() {
     setPayload(EXAMPLE_PAYLOAD)
     setSecret(EXAMPLE_SECRET)
     setAlgorithm('HS256')
+    setToken('')
+    setError('')
   }
 
   const generate = async () => {

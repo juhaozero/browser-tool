@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { categories, getToolById, tools } from '@/data/tools'
+import { categories, tools } from '@/data/tools'
 import { ToolCard } from '@/components/ToolCard'
-import { getLastToolId, toolCardId } from '@/lib/last-tool'
+import { toolCardId } from '@/lib/last-tool'
 
 /** 首页：工具搜索、分类筛选、返回时定位上次使用的工具 */
 export default function Home() {
@@ -14,9 +14,8 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const [highlightId, setHighlightId] = useState<string | null>(null)
 
-  // 滚动目标：优先用路由 state（从工具页返回），否则读 sessionStorage
-  const scrollTarget =
-    (location.state as { scrollToTool?: string } | null)?.scrollToTool ?? getLastToolId()
+  // 仅当从工具页返回时定位，避免侧边栏分类筛选时误滚动
+  const scrollTarget = (location.state as { scrollToTool?: string } | null)?.scrollToTool ?? null
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -31,17 +30,11 @@ export default function Home() {
     })
   }, [query, categoryFilter])
 
-  // 若分类筛选导致目标工具不可见，清除筛选
   useEffect(() => {
-    if (!scrollTarget) return
-    const tool = getToolById(scrollTarget)
-    if (!tool) return
-    if (categoryFilter && tool.category !== categoryFilter) {
-      navigate('/', { replace: true, state: { scrollToTool: scrollTarget } })
-    }
-  }, [scrollTarget, categoryFilter, navigate])
+    setHighlightId(null)
+  }, [categoryFilter])
 
-  // 返回首页时滚动并高亮上次使用的工具
+  // 从工具页返回时滚动并高亮对应工具
   useEffect(() => {
     if (!scrollTarget) return
     if (!filtered.some((t) => t.id === scrollTarget)) return

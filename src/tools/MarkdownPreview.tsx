@@ -28,12 +28,29 @@ console.log(hello)
 | Base64 | ✅ |
 `
 
+/** 移除危险标签与事件属性，防止 XSS */
+function sanitizeHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  doc.querySelectorAll('script, iframe, object, embed, form, style').forEach((el) => el.remove())
+  doc.querySelectorAll('*').forEach((el) => {
+    for (const attr of [...el.attributes]) {
+      const name = attr.name.toLowerCase()
+      const value = attr.value.trim().toLowerCase()
+      if (name.startsWith('on') || value.startsWith('javascript:') || value.startsWith('data:text/html')) {
+        el.removeAttribute(attr.name)
+      }
+    }
+  })
+  return doc.body.innerHTML
+}
+
 export default function MarkdownPreview() {
   const [markdown, setMarkdown] = useState(EXAMPLE_MD)
 
   const html = useMemo(() => {
     try {
-      return marked.parse(markdown, { async: false }) as string
+      const raw = marked.parse(markdown, { async: false }) as string
+      return sanitizeHtml(raw)
     } catch {
       return '<p>解析失败</p>'
     }

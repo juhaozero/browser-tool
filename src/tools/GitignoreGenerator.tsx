@@ -91,10 +91,20 @@ export default function GitignoreGenerator() {
     }
   }
 
-  const loadExample = () => {
+  const loadExample = async () => {
     setSelected(new Set(EXAMPLE_SELECTED))
     setQuery('')
     setCategory('all')
+    setLoading(true)
+    setError('')
+    try {
+      const content = await mergeTemplates(EXAMPLE_SELECTED)
+      setOutput(content)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '生成失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

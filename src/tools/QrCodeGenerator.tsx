@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
-import { Button, Input, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { Alert, Button, Input, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { downloadDataUrl } from '@/lib/download'
 
 const EXAMPLE_TEXT = 'https://github.com'
@@ -15,19 +15,37 @@ export default function QrCodeGenerator() {
   const [darkColor, setDarkColor] = useState('#000000')
   const [lightColor, setLightColor] = useState('#ffffff')
   const [dataUrl, setDataUrl] = useState('')
+  const [error, setError] = useState('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     if (!text.trim()) {
       setDataUrl('')
+      setError('')
       return
     }
+    let cancelled = false
     QRCode.toDataURL(text, {
       width: parseInt(size, 10) || 256,
       margin: parseInt(margin, 10) || 2,
       errorCorrectionLevel: ecLevel,
       color: { dark: darkColor, light: lightColor },
-    }).then(setDataUrl)
+    })
+      .then((url) => {
+        if (!cancelled) {
+          setDataUrl(url)
+          setError('')
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setDataUrl('')
+          setError(e instanceof Error ? e.message : '二维码生成失败')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
   }, [text, size, margin, ecLevel, darkColor, lightColor])
 
   const download = () => {
@@ -80,6 +98,8 @@ export default function QrCodeGenerator() {
           </div>
         </div>
       </div>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       {dataUrl && (
         <div className="flex justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-6">

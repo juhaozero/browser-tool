@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
-import { Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { Alert, Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 
 const BASE = {
   lower: 'abcdefghijklmnopqrstuvwxyz',
@@ -55,10 +55,12 @@ export default function PasswordGenerator() {
   const [minDigits, setMinDigits] = useState('1')
   const [minSymbols, setMinSymbols] = useState('1')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
   const strength = useMemo(() => (password ? assessStrength(password) : null), [password])
 
   const generate = useCallback(() => {
+    setError('')
     let lower = BASE.lower
     let upper = BASE.upper
     let digits = BASE.digits
@@ -75,12 +77,18 @@ export default function PasswordGenerator() {
     if (useUpper) charset += upper
     if (useDigits) charset += digits
     if (useSymbols) charset += symbols
-    if (!charset) return
+    if (!charset) {
+      setError('请至少选择一种字符类型')
+      return
+    }
 
     const len = Math.min(Math.max(parseInt(length, 10) || 16, 4), 128)
     const minD = useDigits ? Math.min(parseInt(minDigits, 10) || 0, len) : 0
     const minS = useSymbols ? Math.min(parseInt(minSymbols, 10) || 0, len) : 0
-    if (minD + minS > len) return
+    if (minD + minS > len) {
+      setError('最少数字与特殊字符个数之和不能超过密码长度')
+      return
+    }
 
     const required = [
       ...shufflePick(digits, minD),
@@ -139,6 +147,8 @@ export default function PasswordGenerator() {
       <Button variant="primary" onClick={generate}>
         生成密码
       </Button>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       {password && (
         <>

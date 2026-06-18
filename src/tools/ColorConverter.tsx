@@ -1,50 +1,90 @@
 import { useEffect, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
-import { Input, ToolPanel, ToolSection } from '@/components/ui'
+import { Alert, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { hslToRgb, parseHexColor, rgbToHsl } from '@/lib/utils'
 
 function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
 }
 
-function applyColor(
-  r: number,
-  g: number,
-  b: number,
-  setHex: (v: string) => void,
-  setRgb: (v: { r: number; g: number; b: number }) => void,
-  setHsl: (v: { h: number; s: number; l: number }) => void,
-) {
-  setRgb({ r, g, b })
-  setHex(rgbToHex(r, g, b))
-  setHsl(rgbToHsl(r, g, b))
+function clampChannel(value: string, max: number): number {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 0
+  return Math.min(max, Math.max(0, Math.round(n)))
 }
 
 export default function ColorConverter() {
   const [hex, setHex] = useState('#0891b2')
   const [rgb, setRgb] = useState({ r: 8, g: 145, b: 178 })
   const [hsl, setHsl] = useState({ h: 192, s: 92, l: 36 })
+  const [rgbText, setRgbText] = useState({ r: '8', g: '145', b: '178' })
+  const [hslText, setHslText] = useState({ h: '192', s: '92', l: '36' })
+  const [hexError, setHexError] = useState('')
+
+  const syncFromRgb = (r: number, g: number, b: number) => {
+    setRgb({ r, g, b })
+    setRgbText({ r: String(r), g: String(g), b: String(b) })
+    setHex(rgbToHex(r, g, b))
+    const hslVal = rgbToHsl(r, g, b)
+    setHsl(hslVal)
+    setHslText({ h: String(hslVal.h), s: String(hslVal.s), l: String(hslVal.l) })
+    setHexError('')
+  }
 
   useEffect(() => {
     const parsed = parseHexColor(hex)
-    if (!parsed) return
+    if (!parsed) {
+      if (hex.trim() !== '') setHexError('无效的 HEX 颜色，请输入 #RGB 或 #RRGGBB')
+      return
+    }
+    setHexError('')
     setRgb(parsed)
-    setHsl(rgbToHsl(parsed.r, parsed.g, parsed.b))
+    setRgbText({ r: String(parsed.r), g: String(parsed.g), b: String(parsed.b) })
+    const hslVal = rgbToHsl(parsed.r, parsed.g, parsed.b)
+    setHsl(hslVal)
+    setHslText({ h: String(hslVal.h), s: String(hslVal.s), l: String(hslVal.l) })
   }, [hex])
 
-  const updateFromRgb = (key: 'r' | 'g' | 'b', value: number) => {
-    const next = { ...rgb, [key]: Math.min(255, Math.max(0, value)) }
-    applyColor(next.r, next.g, next.b, setHex, setRgb, setHsl)
+  const updateFromRgbText = (key: 'r' | 'g' | 'b', value: string) => {
+    setRgbText((prev) => ({ ...prev, [key]: value }))
+    if (value.trim() === '' || !Number.isFinite(Number(value))) return
+    const next = { ...rgb, [key]: clampChannel(value, 255) }
+    syncFromRgb(next.r, next.g, next.b)
   }
 
-  const updateFromHsl = (key: 'h' | 's' | 'l', value: number) => {
+  const commitRgbText = (key: 'r' | 'g' | 'b') => {
+    const value = rgbText[key]
+    if (value.trim() === '' || !Number.isFinite(Number(value))) {
+      setRgbText((prev) => ({ ...prev, [key]: String(rgb[key]) }))
+      return
+    }
+    const next = { ...rgb, [key]: clampChannel(value, 255) }
+    syncFromRgb(next.r, next.g, next.b)
+  }
+
+  const updateFromHslText = (key: 'h' | 's' | 'l', value: string) => {
+    setHslText((prev) => ({ ...prev, [key]: value }))
+    if (value.trim() === '' || !Number.isFinite(Number(value))) return
+    const max = key === 'h' ? 360 : 100
     const next = {
-      h: key === 'h' ? Math.min(360, Math.max(0, value)) : hsl.h,
-      s: key === 's' ? Math.min(100, Math.max(0, value)) : hsl.s,
-      l: key === 'l' ? Math.min(100, Math.max(0, value)) : hsl.l,
+      h: key === 'h' ? clampChannel(value, max) : hsl.h,
+      s: key === 's' ? clampChannel(value, max) : hsl.s,
+      l: key === 'l' ? clampChannel(value, max) : hsl.l,
     }
     const rgbVal = hslToRgb(next.h, next.s, next.l)
-    applyColor(rgbVal.r, rgbVal.g, rgbVal.b, setHex, setRgb, setHsl)
+    syncFromRgb(rgbVal.r, rgbVal.g, rgbVal.b)
+  }
+
+  const commitHslText = (key: 'h' | 's' | 'l') => {
+    const value = hslText[key]
+    if (value.trim() === '' || !Number.isFinite(Number(value))) {
+      setHslText((prev) => ({ ...prev, [key]: String(hsl[key]) }))
+      return
+    }
+    const max = key === 'h' ? 360 : 100
+    const next = { ...hsl, [key]: clampChannel(value, max) }
+    const rgbVal = hslToRgb(next.h, next.s, next.l)
+    syncFromRgb(rgbVal.r, rgbVal.g, rgbVal.b)
   }
 
   const pickerHex = rgbToHex(rgb.r, rgb.g, rgb.b)
@@ -92,7 +132,7 @@ export default function ColorConverter() {
             min={0}
             max={360}
             value={hsl.h}
-            onChange={(e) => updateFromHsl('h', Number(e.target.value))}
+            onChange={(e) => updateFromHslText('h', e.target.value)}
             className="color-slider color-slider-hue w-full"
             style={{
               background:
@@ -111,7 +151,7 @@ export default function ColorConverter() {
             min={0}
             max={100}
             value={hsl.s}
-            onChange={(e) => updateFromHsl('s', Number(e.target.value))}
+            onChange={(e) => updateFromHslText('s', e.target.value)}
             className="color-slider w-full"
             style={{
               background: `linear-gradient(to right, hsl(${hsl.h}, 0%, ${hsl.l}%), hsl(${hsl.h}, 100%, ${hsl.l}%))`,
@@ -129,7 +169,7 @@ export default function ColorConverter() {
             min={0}
             max={100}
             value={hsl.l}
-            onChange={(e) => updateFromHsl('l', Number(e.target.value))}
+            onChange={(e) => updateFromHslText('l', e.target.value)}
             className="color-slider w-full"
             style={{
               background: `linear-gradient(to right, #000, hsl(${hsl.h}, ${hsl.s}%, 50%), #fff)`,
@@ -142,13 +182,16 @@ export default function ColorConverter() {
         <Input value={hex} onChange={setHex} placeholder="#0891b2" />
       </ToolSection>
 
+      {hexError && <Alert type="error">{hexError}</Alert>}
+
       <div className="grid gap-3 sm:grid-cols-3">
         {(['r', 'g', 'b'] as const).map((key) => (
           <div key={key} className="space-y-1">
             <label className="text-sm uppercase text-[var(--text-muted)]">{key}</label>
             <Input
-              value={String(rgb[key])}
-              onChange={(v) => updateFromRgb(key, parseInt(v, 10) || 0)}
+              value={rgbText[key]}
+              onChange={(v) => updateFromRgbText(key, v)}
+              onBlur={() => commitRgbText(key)}
               type="number"
             />
           </div>
@@ -160,8 +203,9 @@ export default function ColorConverter() {
           <div key={key} className="space-y-1">
             <label className="text-sm uppercase text-[var(--text-muted)]">{key}</label>
             <Input
-              value={String(hsl[key])}
-              onChange={(v) => updateFromHsl(key, parseInt(v, 10) || 0)}
+              value={hslText[key]}
+              onChange={(v) => updateFromHslText(key, v)}
+              onBlur={() => commitHslText(key)}
               type="number"
             />
           </div>

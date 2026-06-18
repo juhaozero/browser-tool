@@ -32,11 +32,33 @@ export default function Base64Tool() {
     }
   }
 
+  const loadPlainExample = () => {
+    setInput(EXAMPLE_PLAIN)
+    setError('')
+    try {
+      setOutput(base64Encode(EXAMPLE_PLAIN))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '编码失败')
+      setOutput('')
+    }
+  }
+
+  const loadBase64Example = () => {
+    setInput(EXAMPLE_BASE64)
+    setError('')
+    try {
+      setOutput(base64Decode(EXAMPLE_BASE64))
+    } catch {
+      setError('Base64 格式无效，请检查输入')
+      setOutput('')
+    }
+  }
+
   return (
     <ToolPanel className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <ExampleButton onClick={() => setInput(EXAMPLE_PLAIN)} label="示例明文" />
-        <ExampleButton onClick={() => setInput(EXAMPLE_BASE64)} label="示例 Base64" />
+        <ExampleButton onClick={loadPlainExample} label="示例明文" />
+        <ExampleButton onClick={loadBase64Example} label="示例 Base64" />
         <Button variant="primary" onClick={encode}>
           编码 → Base64
         </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
@@ -12,13 +12,17 @@ export default function Sha256Hash() {
   const [format, setFormat] = useState<'hex' | 'base64'>('hex')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null)
+
+  const formatBuffer = (buffer: ArrayBuffer) =>
+    format === 'hex' ? bufferToHex(buffer) : bufferToBase64(buffer)
 
   const compute = async (text: string) => {
     setLoading(true)
     setError('')
     try {
-      const buffer = await hashText('SHA-256', text)
-      setOutput(format === 'hex' ? bufferToHex(buffer) : bufferToBase64(buffer))
+      const buffer = fileBuffer ?? (await hashText('SHA-256', text))
+      setOutput(formatBuffer(buffer))
     } catch (e) {
       setError(e instanceof Error ? e.message : '哈希计算失败')
     } finally {
@@ -33,7 +37,8 @@ export default function Sha256Hash() {
     setError('')
     try {
       const buffer = await hashFile('SHA-256', file)
-      setOutput(format === 'hex' ? bufferToHex(buffer) : bufferToBase64(buffer))
+      setFileBuffer(buffer)
+      setOutput(formatBuffer(buffer))
       setInput(`[文件] ${file.name} (${file.size} bytes)`)
     } catch (e) {
       setError(e instanceof Error ? e.message : '文件哈希失败')
@@ -42,10 +47,22 @@ export default function Sha256Hash() {
     }
   }
 
+  useEffect(() => {
+    if (!fileBuffer) return
+    setOutput(format === 'hex' ? bufferToHex(fileBuffer) : bufferToBase64(fileBuffer))
+  }, [format, fileBuffer])
+
   return (
     <ToolPanel className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ExampleButton onClick={() => setInput(EXAMPLE)} />
+        <ExampleButton
+          onClick={() => {
+            setInput(EXAMPLE)
+            setFileBuffer(null)
+            setOutput('')
+            setError('')
+          }}
+        />
         <Select
           value={format}
           onChange={(v) => setFormat(v as 'hex' | 'base64')}
@@ -54,7 +71,7 @@ export default function Sha256Hash() {
             { value: 'base64', label: 'Base64 输出' },
           ]}
         />
-        <Button variant="primary" onClick={() => compute(input)} disabled={loading || !input}>
+        <Button variant="primary" onClick={() => compute(input)} disabled={loading || (!input && !fileBuffer)}>
           计算哈希
         </Button>
         <label className="cursor-pointer">
@@ -66,7 +83,15 @@ export default function Sha256Hash() {
       </div>
 
       <ToolSection label="输入文本" action={<CopyButton text={input} label="复制输入" />}>
-        <TextArea value={input} onChange={setInput} placeholder="输入要哈希的文本" rows={6} />
+        <TextArea
+          value={input}
+          onChange={(v) => {
+            setInput(v)
+            setFileBuffer(null)
+          }}
+          placeholder="输入要哈希的文本"
+          rows={6}
+        />
       </ToolSection>
 
       {error && <Alert type="error">{error}</Alert>}

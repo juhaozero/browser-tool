@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Button, Input, ToolPanel, ToolSection } from '@/components/ui'
+import { useEffect, useRef, useState } from 'react'
+import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
 import { loadImage } from '@/lib/image-utils'
 
@@ -10,42 +10,63 @@ export default function ImageResizer() {
   const [height, setHeight] = useState('600')
   const [keepAspect, setKeepAspect] = useState(true)
   const [format, setFormat] = useState('image/png')
+  const [error, setError] = useState('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const previewUrlRef = useRef('')
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
     setFile(f)
-    const img = await loadImage(f)
-    setWidth(String(img.width))
-    setHeight(String(img.height))
-    setPreview(URL.createObjectURL(f))
+    setError('')
+    try {
+      const img = await loadImage(f)
+      setWidth(String(img.width))
+      setHeight(String(img.height))
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+      const url = URL.createObjectURL(f)
+      previewUrlRef.current = url
+      setPreview(url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '图片加载失败')
+    }
   }
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
 
   const resize = async () => {
     if (!file || !canvasRef.current) return
-    const img = await loadImage(file)
-    let w = parseInt(width, 10) || img.width
-    let h = parseInt(height, 10) || img.height
-    if (keepAspect) {
-      const ratio = Math.min(w / img.width, h / img.height)
-      w = Math.round(img.width * ratio)
-      h = Math.round(img.height * ratio)
+    setError('')
+    try {
+      const img = await loadImage(file)
+      let w = parseInt(width, 10) || img.width
+      let h = parseInt(height, 10) || img.height
+      if (keepAspect) {
+        const ratio = Math.min(w / img.width, h / img.height)
+        w = Math.round(img.width * ratio)
+        h = Math.round(img.height * ratio)
+      }
+      const canvas = canvasRef.current
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')!
+      if (format === 'image/jpeg') {
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(0, 0, w, h)
+      }
+      ctx.drawImage(img, 0, 0, w, h)
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('缩放失败'))), format, 0.92)
+      })
+      const ext = format.split('/')[1]
+      downloadBlob(blob, `resized.${ext}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '缩放失败')
     }
-    const canvas = canvasRef.current
-    canvas.width = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')!
-    if (format === 'image/jpeg') {
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, w, h)
-    }
-    ctx.drawImage(img, 0, 0, w, h)
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject()), format, 0.92)
-    })
-    const ext = format.split('/')[1]
-    downloadBlob(blob, `resized.${ext}`)
   }
 
   return (
@@ -86,6 +107,8 @@ export default function ImageResizer() {
           缩放并下载
         </Button>
       </div>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       <canvas ref={canvasRef} className="hidden" />
     </ToolPanel>

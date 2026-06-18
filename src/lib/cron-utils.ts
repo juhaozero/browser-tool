@@ -28,6 +28,27 @@ function matchField(value: number, field: string, _min: number, _max: number): b
   return parseInt(field, 10) === value
 }
 
+/** 周字段匹配：cron 中 0 与 7 均表示周日 */
+function matchDowField(value: number, field: string): boolean {
+  if (field === '?' || field === '*') return true
+  if (field.includes(',')) {
+    return field.split(',').some((part) => matchDowField(value, part.trim()))
+  }
+  if (field.includes('-')) {
+    const [a, b] = field.split('-').map((v) => (parseInt(v, 10) === 7 ? 0 : parseInt(v, 10)))
+    return value >= Math.min(a, b) && value <= Math.max(a, b)
+  }
+  if (field.includes('/')) {
+    const [base, step] = field.split('/')
+    const stepN = parseInt(step, 10)
+    const start = base === '*' ? 0 : parseInt(base, 10) === 7 ? 0 : parseInt(base, 10)
+    return value >= start && (value - start) % stepN === 0
+  }
+  const n = parseInt(field, 10)
+  const target = n === 7 ? 0 : n
+  return value === target
+}
+
 export function validateCron(expr: string): string | null {
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return 'Cron 表达式需要 5 个字段：分 时 日 月 周'
@@ -35,7 +56,7 @@ export function validateCron(expr: string): string | null {
     const { min, max, name } = FIELD_RANGES[i]
     const field = parts[i]
     if (field === '?') continue
-    if (!/^[\d*,/-]+$/.test(field)) return `${name}字段格式无效: ${field}`
+    if (!/^[\d*,/?-]+$/.test(field)) return `${name}字段格式无效: ${field}`
     if (!field.includes('*') && !field.includes('/') && !field.includes('-') && !field.includes(',')) {
       const n = parseInt(field, 10)
       if (n < min || n > max) return `${name}字段值 ${n} 超出范围 [${min}-${max}]`
@@ -60,7 +81,30 @@ export function describeCron(expr: string): string {
   return parts.length ? parts.join('，') + ' 执行' : '每分钟执行'
 }
 
-export function getNextCronRuns(expr: string, count = 5): Date[] | string {
+/** 日字段与周字段匹配：两者均指定时为 OR 语义（标准 cron） */
+function matchesDomDow(
+  dayOfMonth: number,
+  dayOfWeek: number,
+  dayField: string,
+  dowField: string,
+): boolean {
+  const domWildcard = dayField === '*'
+  const dowWildcard = dowField === '*' || dowField === '?'
+  const domMatch = matchField(dayOfMonth, dayField, 1, 31)
+  const dowMatch = matchDowField(dayOfWeek, dowField)
+
+  if (domWildcard && dowWildcard) return true
+  if (domWildcard) return dowMatch
+  if (dowWildcard) return domMatch
+  return domMatch || dowMatch
+}
+
+export interface CronNextRunsResult {
+  runs: Date[]
+  incomplete: boolean
+}
+
+export function getNextCronRuns(expr: string, count = 5): CronNextRunsResult | string {
   const err = validateCron(expr)
   if (err) return err
   const parts = expr.trim().split(/\s+/)
@@ -80,15 +124,14 @@ export function getNextCronRuns(expr: string, count = 5): Date[] | string {
     if (
       matchField(m, parts[0], 0, 59) &&
       matchField(h, parts[1], 0, 23) &&
-      matchField(d, parts[2], 1, 31) &&
       matchField(mo, parts[3], 1, 12) &&
-      (parts[4] === '?' || matchField(dow, parts[4], 0, 7))
+      matchesDomDow(d, dow, parts[2], parts[4])
     ) {
       results.push(new Date(cursor))
     }
     cursor.setMinutes(cursor.getMinutes() + 1)
   }
-  return results
+  return { runs: results, incomplete: results.length < count }
 }
 
 export const CRON_PRESETS = [

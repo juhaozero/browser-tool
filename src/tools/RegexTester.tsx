@@ -16,7 +16,7 @@ export default function RegexTester() {
     try {
       const regex = new RegExp(pattern, flags)
       const matches = [...text.matchAll(regex)]
-      const replaced = replacement ? text.replace(regex, replacement) : ''
+      const replaced = pattern ? text.replace(regex, replacement) : ''
       return { matches, error: '', replaced }
     } catch (e) {
       return {
@@ -73,7 +73,7 @@ export default function RegexTester() {
         <Input value={replacement} onChange={setReplacement} placeholder="替换为..." />
       </ToolSection>
 
-      {result.replaced && (
+      {pattern && !result.error && (
         <ToolSection label="替换预览">
           <TextArea value={result.replaced} readOnly rows={6} mono={false} />
         </ToolSection>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
 import { convertImageFormat } from '@/lib/image-utils'
@@ -40,16 +40,27 @@ export default function ImageConverter({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const previewUrlRef = useRef('')
+
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
     setFile(f)
-    setPreview(URL.createObjectURL(f))
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    const url = URL.createObjectURL(f)
+    previewUrlRef.current = url
+    setPreview(url)
     setError('')
     const img = new Image()
     img.onload = () => setOriginalSize({ w: img.width, h: img.height })
-    img.src = URL.createObjectURL(f)
+    img.src = url
   }
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
 
   const outputSize = () => {
     if (!originalSize.w) return null
@@ -198,22 +209,40 @@ export function ImageToIco() {
   const [iconSize, setIconSize] = useState('32')
   const [speed, setSpeed] = useState('high')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const previewUrlRef = useRef('')
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
     setFile(f)
-    setPreview(URL.createObjectURL(f))
+    setError('')
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    const url = URL.createObjectURL(f)
+    previewUrlRef.current = url
+    setPreview(url)
   }
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
 
   const convert = async () => {
     if (!file) return
     setLoading(true)
-    const { imageToIco } = await import('@/lib/image-utils')
-    const size = parseInt(iconSize, 10) || 32
-    const blob = await imageToIco(file, size, speed as ImageSmoothingQuality)
-    downloadBlob(blob, `favicon-${size}.png`)
-    setLoading(false)
+    setError('')
+    try {
+      const { imageToIco } = await import('@/lib/image-utils')
+      const size = parseInt(iconSize, 10) || 32
+      const blob = await imageToIco(file, size, speed as ImageSmoothingQuality)
+      downloadBlob(blob, `favicon-${size}.png`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '图标生成失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -250,6 +279,7 @@ export function ImageToIco() {
       <Button variant="primary" onClick={convert} disabled={!file || loading}>
         {loading ? '生成中...' : '生成图标'}
       </Button>
+      {error && <Alert type="error">{error}</Alert>}
     </ToolPanel>
   )
 }

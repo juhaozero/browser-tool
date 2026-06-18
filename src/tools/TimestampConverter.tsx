@@ -23,13 +23,27 @@ function toMs(ts: number, unit: 's' | 'ms' | 'µs' | 'ns'): number {
   }
 }
 
+function toIsoLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function syncFromMs(ms: number, setTimestamp: (v: string) => void, setTimestampMs: (v: string) => void, setDatetime: (v: string) => void) {
+  setTimestamp(String(Math.floor(ms / 1000)))
+  setTimestampMs(String(ms))
+  setDatetime(toIsoLocal(new Date(ms)))
+}
+
 export default function TimestampConverter() {
   const [timestamp, setTimestamp] = useState('')
+  const [timestampMs, setTimestampMs] = useState('')
   const [datetime, setDatetime] = useState('')
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
+    const id = setInterval(() => {
+      setNow(Date.now())
+    }, 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -37,29 +51,40 @@ export default function TimestampConverter() {
     const num = Number(ts)
     if (!Number.isFinite(num)) return
     const unit = detectUnit(num)
-    const date = new Date(toMs(num, unit))
-    setDatetime(date.toISOString().slice(0, 19))
+    syncFromMs(toMs(num, unit), setTimestamp, setTimestampMs, setDatetime)
+  }
+
+  const fromTimestampMs = (tsMs: string) => {
+    const num = Number(tsMs)
+    if (!Number.isFinite(num)) return
+    syncFromMs(num, setTimestamp, setTimestampMs, setDatetime)
   }
 
   const fromDatetime = (dt: string) => {
     const date = new Date(dt)
     if (Number.isNaN(date.getTime())) return
-    setTimestamp(String(Math.floor(date.getTime() / 1000)))
+    syncFromMs(date.getTime(), setTimestamp, setTimestampMs, setDatetime)
   }
 
   const useNow = () => {
-    setTimestamp(String(Math.floor(now / 1000)))
-    setDatetime(new Date(now).toISOString().slice(0, 19))
+    syncFromMs(now, setTimestamp, setTimestampMs, setDatetime)
   }
+
+  const displayDate = timestampMs ? new Date(Number(timestampMs)) : null
 
   return (
     <ToolPanel className="space-y-4">
       <div className="flex gap-2">
-        <ExampleButton onClick={() => { setTimestamp('1700000000'); setDatetime('2023-11-14T22:13:20') }} />
+        <ExampleButton
+          onClick={() => {
+            syncFromMs(1700000000000, setTimestamp, setTimestampMs, setDatetime)
+          }}
+        />
         <Button variant="primary" onClick={useNow}>
           使用当前时间
         </Button>
         <CopyButton text={String(Math.floor(now / 1000))} label="复制当前秒级时间戳" />
+        <CopyButton text={String(now)} label="复制当前毫秒级时间戳" />
       </div>
 
       <ToolSection label="Unix 时间戳（秒）">
@@ -72,7 +97,16 @@ export default function TimestampConverter() {
           placeholder="1700000000"
         />
       </ToolSection>
-
+      <ToolSection label="Unix 时间戳（毫秒）">
+        <Input
+          value={timestampMs}
+          onChange={(v) => {
+            setTimestampMs(v)
+            fromTimestampMs(v)
+          }}
+          placeholder="1700000000000"
+        />
+      </ToolSection>
       <ToolSection label="日期时间 (ISO 8601)">
         <Input
           value={datetime}
@@ -84,19 +118,19 @@ export default function TimestampConverter() {
         />
       </ToolSection>
 
-      {timestamp && (
+      {displayDate && !Number.isNaN(displayDate.getTime()) && (
         <div className="grid gap-2 rounded-lg bg-[var(--bg-muted)] p-4 text-sm sm:grid-cols-2">
           <div>
             <span className="text-[var(--text-muted)]">毫秒：</span>
-            {Number(timestamp) * 1000}
+            {timestampMs}
           </div>
           <div>
             <span className="text-[var(--text-muted)]">UTC：</span>
-            {datetime ? new Date(datetime).toUTCString() : '-'}
+            {displayDate.toUTCString()}
           </div>
           <div>
             <span className="text-[var(--text-muted)]">本地：</span>
-            {datetime ? new Date(datetime).toLocaleString('zh-CN') : '-'}
+            {displayDate.toLocaleString()}
           </div>
         </div>
       )}

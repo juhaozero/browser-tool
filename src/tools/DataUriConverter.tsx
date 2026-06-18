@@ -63,7 +63,17 @@ export default function DataUriConverter() {
       </div>
 
       <ToolSection label="Data URI">
-        <TextArea value={input} onChange={setInput} rows={6} placeholder="data:text/plain;charset=utf-8,Hello" />
+        <TextArea
+          value={input}
+          onChange={(v) => {
+            setInput(v)
+            setInfo(null)
+            setError('')
+            bytesRef.current = null
+          }}
+          rows={6}
+          placeholder="data:text/plain;charset=utf-8,Hello"
+        />
       </ToolSection>
 
       {error && <Alert type="error">{error}</Alert>}

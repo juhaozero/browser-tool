@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
@@ -15,57 +15,76 @@ export default function AesCrypto() {
   const [ciphertext, setCiphertext] = useState('')
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
+  const opIdRef = useRef(0)
+
+  const doEncrypt = async (plain: string, pwd: string) => {
+    const opId = ++opIdRef.current
+    setError('')
+    try {
+      if (!pwd) throw new Error('请填写密码')
+      const envelope = await aesEncrypt(plain, pwd)
+      if (opId !== opIdRef.current) return
+      const json = formatJson(envelope)
+      setOutput(json)
+      setCiphertext(json)
+    } catch (e) {
+      if (opId !== opIdRef.current) return
+      setError(e instanceof Error ? e.message : '加密失败')
+    }
+  }
+
+  const doDecrypt = async (cipher: string, pwd: string) => {
+    const opId = ++opIdRef.current
+    setError('')
+    try {
+      if (!pwd) throw new Error('请填写密码')
+      if (!cipher.trim()) throw new Error('请填写密文')
+      const envelope = JSON.parse(cipher)
+      const plain = await aesDecrypt(envelope, pwd)
+      if (opId !== opIdRef.current) return
+      setOutput(plain)
+    } catch {
+      if (opId !== opIdRef.current) return
+      setError('解密失败，请检查密文和密码')
+    }
+  }
+
+  const handleEncrypt = () => {
+    setMode('encrypt')
+    void doEncrypt(plaintext, password)
+  }
+
+  const handleDecrypt = () => {
+    setMode('decrypt')
+    void doDecrypt(ciphertext, password)
+  }
 
   const loadExample = () => {
     setPlaintext(EXAMPLE_PLAIN)
     setPassword(EXAMPLE_PASSWORD)
     setCiphertext('')
-    setOutput('')
     setMode('encrypt')
+    void doEncrypt(EXAMPLE_PLAIN, EXAMPLE_PASSWORD)
   }
 
-  const encrypt = async () => {
-    setError('')
-    try {
-      if (!password) throw new Error('请填写密码')
-      const envelope = await aesEncrypt(plaintext, password)
-      const json = formatJson(envelope)
-      setOutput(json)
-      setCiphertext(json)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '加密失败')
-    }
-  }
-
-  const decrypt = async () => {
-    setError('')
-    try {
-      if (!password) throw new Error('请填写密码')
-      const envelope = JSON.parse(ciphertext || output)
-      const plain = await aesDecrypt(envelope, password)
-      setOutput(plain)
-    } catch {
-      setError('解密失败，请检查密文和密码')
-    }
-  }
+  useEffect(() => {
+    void doEncrypt(EXAMPLE_PLAIN, EXAMPLE_PASSWORD)
+  }, [])
 
   return (
     <ToolPanel className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <ExampleButton onClick={loadExample} />
-        <Button variant={mode === 'encrypt' ? 'primary' : 'secondary'} onClick={() => setMode('encrypt')}>
+        <Button variant={mode === 'encrypt' ? 'primary' : 'secondary'} onClick={handleEncrypt}>
           加密
         </Button>
-        <Button variant={mode === 'decrypt' ? 'primary' : 'secondary'} onClick={() => setMode('decrypt')}>
+        <Button variant={mode === 'decrypt' ? 'primary' : 'secondary'} onClick={handleDecrypt}>
           解密
-        </Button>
-        <Button variant="primary" onClick={mode === 'encrypt' ? encrypt : decrypt}>
-          {mode === 'encrypt' ? '执行加密' : '执行解密'}
         </Button>
       </div>
 
       <ToolSection label="密码">
-        <Input value={password} onChange={setPassword} placeholder="加密密码" type="password" />
+        <Input value={password} onChange={setPassword} placeholder="加密密码" />
       </ToolSection>
 
       {mode === 'encrypt' ? (
@@ -73,7 +92,7 @@ export default function AesCrypto() {
           <TextArea value={plaintext} onChange={setPlaintext} rows={6} mono={false} />
         </ToolSection>
       ) : (
-        <ToolSection label="密文 (JSON 信封)">
+        <ToolSection label="密文 (JSON)">
           <TextArea value={ciphertext} onChange={setCiphertext} rows={8} placeholder='{"salt":"...","iv":"...","ciphertext":"..."}' />
         </ToolSection>
       )}

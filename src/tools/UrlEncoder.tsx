@@ -29,10 +29,20 @@ export default function UrlEncoder() {
     }
   }
 
+  const loadExample = () => {
+    setInput(EXAMPLE_URL)
+    setError('')
+    try {
+      setOutput(encodeURIComponent(EXAMPLE_URL))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '编码失败')
+    }
+  }
+
   return (
     <ToolPanel className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <ExampleButton onClick={() => setInput(EXAMPLE_URL)} />
+        <ExampleButton onClick={loadExample} />
         <Button variant="primary" onClick={() => encode(true)}>
            编码Url查询参数
         </Button>
