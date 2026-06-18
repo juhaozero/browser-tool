@@ -69,7 +69,7 @@ export function validateHttpUrl(url: string): string | null {
       return 'URL 须以 http:// 或 https:// 开头'
     }
     return null
-  } catch (error) {
+  } catch {
     return 'URL 格式无效'
   }
 }

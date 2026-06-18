@@ -106,18 +106,20 @@ export default function ImageConverter({
       setError(maxHeightParsed.error)
       return
     }
+    let qualityValue: number | undefined
     if (supportsQuality) {
       const qualityParsed = parseIntInRange(quality, 10, 100, '输出质量')
       if (!qualityParsed.ok) {
         setError(qualityParsed.error)
         return
       }
+      qualityValue = qualityParsed.value / 100
     }
     setLoading(true)
     setError('')
     try {
       const blob = await convertImageFormat(file, mime, {
-        quality: supportsQuality ? (parseInt(quality, 10) || defaultQuality) / 100 : undefined,
+        quality: qualityValue,
         scalePercent: scaleParsed.value,
         maxWidth: maxWidthParsed.value,
         maxHeight: maxHeightParsed.value,
@@ -278,7 +280,7 @@ export function ImageToIco() {
 
   return (
     <ToolPanel className="space-y-4">
-      <p className="text-sm text-[var(--text-muted)]">生成网站 favicon 图标，支持尺寸与缩放质量调节。</p>
+      <p className="text-sm text-[var(--text-muted)]">生成 PNG 格式 favicon（浏览器原生 ICO 编码较复杂，此处输出 PNG）。</p>
       <label className="cursor-pointer">
         <span className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-2 text-sm hover:border-[var(--accent)]">
           选择图片

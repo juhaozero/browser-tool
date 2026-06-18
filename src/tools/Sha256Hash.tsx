@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
@@ -14,8 +14,8 @@ export default function Sha256Hash() {
   const [error, setError] = useState('')
   const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null)
 
-  const formatBuffer = (buffer: ArrayBuffer) =>
-    format === 'hex' ? bufferToHex(buffer) : bufferToBase64(buffer)
+  const formatBuffer = (buffer: ArrayBuffer, fmt: 'hex' | 'base64' = format) =>
+    fmt === 'hex' ? bufferToHex(buffer) : bufferToBase64(buffer)
 
   const compute = async (text: string) => {
     setLoading(true)
@@ -47,10 +47,11 @@ export default function Sha256Hash() {
     }
   }
 
-  useEffect(() => {
-    if (!fileBuffer) return
-    setOutput(format === 'hex' ? bufferToHex(fileBuffer) : bufferToBase64(fileBuffer))
-  }, [format, fileBuffer])
+  const handleFormatChange = (v: string) => {
+    const next = v as 'hex' | 'base64'
+    setFormat(next)
+    if (fileBuffer) setOutput(formatBuffer(fileBuffer, next))
+  }
 
   return (
     <ToolPanel className="space-y-4">
@@ -65,7 +66,7 @@ export default function Sha256Hash() {
         />
         <Select
           value={format}
-          onChange={(v) => setFormat(v as 'hex' | 'base64')}
+          onChange={handleFormatChange}
           options={[
             { value: 'hex', label: 'Hex 输出' },
             { value: 'base64', label: 'Base64 输出' },
@@ -87,7 +88,10 @@ export default function Sha256Hash() {
           value={input}
           onChange={(v) => {
             setInput(v)
-            setFileBuffer(null)
+            if (fileBuffer) {
+              setFileBuffer(null)
+              setOutput('')
+            }
           }}
           placeholder="输入要哈希的文本"
           rows={6}

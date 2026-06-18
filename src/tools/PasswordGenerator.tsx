@@ -16,6 +16,16 @@ function filterAmbiguous(charset: string): string {
   return [...charset].filter((c) => !AMBIGUOUS.has(c)).join('')
 }
 
+function pickRandom(charset: string): string {
+  if (!charset) throw new Error('empty charset')
+  const bytes = new Uint8Array(1)
+  const limit = Math.floor(256 / charset.length) * charset.length
+  while (true) {
+    crypto.getRandomValues(bytes)
+    if (bytes[0] < limit) return charset[bytes[0] % charset.length]
+  }
+}
+
 function shufflePick(charset: string, count: number): string[] {
   const arr = [...charset]
   const result: string[] = []
@@ -95,9 +105,7 @@ export default function PasswordGenerator() {
       ...shufflePick(symbols, minS),
     ]
     const remaining = len - required.length
-    const bytes = new Uint8Array(remaining)
-    crypto.getRandomValues(bytes)
-    const rest = Array.from(bytes, (b) => charset[b % charset.length])
+    const rest = Array.from({ length: remaining }, () => pickRandom(charset))
     const combined = [...required, ...rest]
     for (let i = combined.length - 1; i > 0; i--) {
       const j = crypto.getRandomValues(new Uint8Array(1))[0] % (i + 1)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
@@ -16,65 +16,67 @@ export default function QrCodeGenerator() {
   const [darkColor, setDarkColor] = useState('#000000')
   const [lightColor, setLightColor] = useState('#ffffff')
   const [dataUrl, setDataUrl] = useState('')
-  const [error, setError] = useState('')
+  const [asyncError, setAsyncError] = useState('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  useEffect(() => {
-    if (!text.trim()) {
-      setDataUrl('')
-      setError('')
-      return
-    }
+  const validationError = useMemo(() => {
+    if (!text.trim()) return ''
     if (text.length > MAX_QR_TEXT_LENGTH) {
-      setDataUrl('')
-      setError(`内容过长（超过 ${MAX_QR_TEXT_LENGTH} 字符），无法生成二维码`)
-      return
+      return `内容过长（超过 ${MAX_QR_TEXT_LENGTH} 字符），无法生成二维码`
     }
     const sizeParsed = parseIntInRange(size, 64, 2048, '尺寸')
-    if (!sizeParsed.ok) {
-      setDataUrl('')
-      setError(sizeParsed.error)
-      return
-    }
+    if (!sizeParsed.ok) return sizeParsed.error
     const marginParsed = parseIntInRange(margin, 0, 10, '边距')
-    if (!marginParsed.ok) {
-      setDataUrl('')
-      setError(marginParsed.error)
-      return
-    }
-    let cancelled = false
-    QRCode.toDataURL(text, {
+    if (!marginParsed.ok) return marginParsed.error
+    return ''
+  }, [text, size, margin])
+
+  const qrOptions = useMemo(() => {
+    if (validationError || !text.trim()) return null
+    const sizeParsed = parseIntInRange(size, 64, 2048, '尺寸')
+    const marginParsed = parseIntInRange(margin, 0, 10, '边距')
+    if (!sizeParsed.ok || !marginParsed.ok) return null
+    return {
       width: sizeParsed.value,
       margin: marginParsed.value,
       errorCorrectionLevel: ecLevel,
       color: { dark: darkColor, light: lightColor },
-    })
+    }
+  }, [validationError, text, size, margin, ecLevel, darkColor, lightColor])
+
+  useEffect(() => {
+    if (!qrOptions) return
+    let cancelled = false
+    QRCode.toDataURL(text, qrOptions)
       .then((url) => {
         if (!cancelled) {
           setDataUrl(url)
-          setError('')
+          setAsyncError('')
         }
       })
       .catch((e) => {
         if (!cancelled) {
           setDataUrl('')
-          setError(e instanceof Error ? e.message : '二维码生成失败')
+          setAsyncError(e instanceof Error ? e.message : '二维码生成失败')
         }
       })
     return () => {
       cancelled = true
     }
-  }, [text, size, margin, ecLevel, darkColor, lightColor])
+  }, [text, qrOptions])
+
+  const error = validationError || (qrOptions ? asyncError : '')
+  const visibleDataUrl = qrOptions ? dataUrl : ''
 
   const download = () => {
-    if (dataUrl) downloadDataUrl(dataUrl, 'qrcode.png')
+    if (visibleDataUrl) downloadDataUrl(visibleDataUrl, 'qrcode.png')
   }
 
   return (
     <ToolPanel className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <ExampleButton onClick={() => setText(EXAMPLE_TEXT)} />
-        <Button variant="primary" onClick={download} disabled={!dataUrl}>
+        <Button variant="primary" onClick={download} disabled={!visibleDataUrl}>
           下载 PNG
         </Button>
       </div>
@@ -119,9 +121,9 @@ export default function QrCodeGenerator() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {dataUrl && (
+      {visibleDataUrl && (
         <div className="flex justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-6">
-          <img src={dataUrl} alt="QR Code" className="max-w-full" />
+          <img src={visibleDataUrl} alt="QR Code" className="max-w-full" />
           <canvas ref={canvasRef} className="hidden" />
         </div>
       )}

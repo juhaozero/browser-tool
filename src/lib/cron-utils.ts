@@ -10,7 +10,7 @@ const FIELD_RANGES = [
   { name: '周', min: 0, max: 7 },
 ]
 
-function matchField(value: number, field: string, _min: number, _max: number): boolean {
+function matchField(value: number, field: string): boolean {
   if (field === '*') return true
   if (field.includes('/')) {
     const [base, step] = field.split('/')
@@ -134,7 +134,7 @@ function matchesDomDow(
 ): boolean {
   const domWildcard = dayField === '*'
   const dowWildcard = dowField === '*' || dowField === '?'
-  const domMatch = matchField(dayOfMonth, dayField, 1, 31)
+  const domMatch = matchField(dayOfMonth, dayField)
   const dowMatch = matchDowField(dayOfWeek, dowField)
 
   if (domWildcard && dowWildcard) return true
@@ -166,9 +166,9 @@ export function getNextCronRuns(expr: string, count = 5): CronNextRunsResult | s
     const mo = cursor.getMonth() + 1
     const dow = cursor.getDay()
     if (
-      matchField(m, parts[0], 0, 59) &&
-      matchField(h, parts[1], 0, 23) &&
-      matchField(mo, parts[3], 1, 12) &&
+      matchField(m, parts[0]) &&
+      matchField(h, parts[1]) &&
+      matchField(mo, parts[3]) &&
       matchesDomDow(d, dow, parts[2], parts[4])
     ) {
       results.push(new Date(cursor))

@@ -88,7 +88,7 @@ export function Layout() {
 
           <div className="flex items-center gap-1.5">
             <span className="mr-2 hidden rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1 text-xs text-[var(--text-muted)] md:inline">
-              {tools.length} 个工具 · 零上传
+              {tools.length} 个工具
             </span>
             <button
               onClick={toggle}

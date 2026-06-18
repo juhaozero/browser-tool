@@ -2,11 +2,11 @@
 
 ![GitHub License](https://img.shields.io/github/license/juhaozero/browser-tool)
 
-纯前端工具集。所有工具在浏览器本地运行，**数据不上传服务器**。
+纯前端工具集。绝大多数工具在浏览器本地运行；少数工具（如 IP 查询、.gitignore 生成）需联网访问第三方接口。
 
 ## 特性
 
-- **隐私优先**：计算、转换、哈希均在本地 Web Crypto / DOM API 中完成
+- **隐私优先**：计算、转换、哈希均在本地 Web Crypto / DOM API 中完成（IP 查询、模板拉取等少数工具除外）
 - **模块化架构**：每个工具独立组件，通过注册表统一管理，易于扩展
 - **开箱即用工具**：JSON、Base64、UUID、时间戳、哈希、JWT 等
 - **深色/浅色主题**：跟随系统偏好，可手动切换

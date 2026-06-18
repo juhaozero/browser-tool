@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
@@ -68,12 +68,10 @@ export default function AesCrypto() {
     setPassword(EXAMPLE_PASSWORD)
     setCiphertext('')
     setMode('encrypt')
+    setOutput('')
+    setError('')
     void doEncrypt(EXAMPLE_PLAIN, EXAMPLE_PASSWORD)
   }
-
-  useEffect(() => {
-    void doEncrypt(EXAMPLE_PLAIN, EXAMPLE_PASSWORD)
-  }, [])
 
   return (
     <ToolPanel className="space-y-4">

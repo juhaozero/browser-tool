@@ -3,6 +3,7 @@
  * 支持常见 -X / -H / -d / -F 参数，多行续行符会被展平
  */
 import { validateHttpUrl } from '@/lib/input-validation'
+
 export interface ParsedCurl {
   method: string
   url: string
@@ -24,8 +25,18 @@ function tokenizeCurlInput(input: string): string[] {
       const quote = ch
       i++
       let val = ''
-      while (i < input.length && input[i] !== quote) val += input[i++]
-      if (i < input.length) i++
+      while (i < input.length) {
+        if (input[i] === '\\' && i + 1 < input.length) {
+          val += input[i + 1]
+          i += 2
+          continue
+        }
+        if (input[i] === quote) {
+          i++
+          break
+        }
+        val += input[i++]
+      }
       tokens.push(val)
       continue
     }
@@ -34,6 +45,18 @@ function tokenizeCurlInput(input: string): string[] {
     tokens.push(val)
   }
   return tokens
+}
+
+/** 拆分粘连 flag，如 -XPOST、-H'Header: value' */
+function expandToken(tok: string): string[] {
+  if (tok === '-X' || tok === '--request' || tok.startsWith('--')) return [tok]
+  const shortFlag = tok.match(/^-([A-Za-z]{2,})(.+)$/)
+  if (shortFlag && shortFlag[1] !== 'X') return [tok]
+  const xMatch = tok.match(/^-X([A-Za-z]+)$/i)
+  if (xMatch) return ['-X', xMatch[1]]
+  const hMatch = tok.match(/^-H(.+)$/s)
+  if (hMatch) return ['-H', hMatch[1]]
+  return [tok]
 }
 
 const FLAGS_WITH_VALUE = new Set([
@@ -54,7 +77,14 @@ const BOOLEAN_FLAGS = new Set([
 ])
 
 function isUrlCandidate(token: string): boolean {
-  return !token.startsWith('-') && /^https?:\/\//i.test(token)
+  if (token.startsWith('-')) return false
+  return /^https?:\/\//i.test(token) || /^[\w.-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(token)
+}
+
+function normalizeCurlUrl(url: string): string {
+  const trimmed = url.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
 }
 
 function readFlagValue(tokens: string[], index: number): string {
@@ -65,7 +95,8 @@ export function parseCurl(input: string): ParsedCurl | string {
   const trimmed = input.trim().replace(/\\\r?\n/g, ' ')
   if (!trimmed.toLowerCase().startsWith('curl')) return '请输入以 curl 开头的命令'
 
-  const tokens = tokenizeCurlInput(trimmed)
+  const rawTokens = tokenizeCurlInput(trimmed)
+  const tokens = rawTokens.flatMap(expandToken)
   if (tokens[0]?.toLowerCase() !== 'curl') return '请输入以 curl 开头的命令'
 
   let method = 'GET'
@@ -123,6 +154,7 @@ export function parseCurl(input: string): ParsedCurl | string {
   const body = bodyParts.join('&')
 
   if (!url) return '未能解析 URL'
+  url = normalizeCurlUrl(url)
   const urlError = validateHttpUrl(url)
   if (urlError) return urlError
   return { method, url, headers, body, formData }
@@ -139,6 +171,14 @@ function buildFetchBody(parsed: ParsedCurl): string | null {
   return null
 }
 
+function inferResponseHandler(parsed: ParsedCurl): string {
+  const contentType = Object.entries(parsed.headers).find(
+    ([k]) => k.toLowerCase() === 'content-type',
+  )?.[1]?.toLowerCase() ?? ''
+  if (contentType.includes('json')) return 'const data = await response.json();'
+  return 'const data = await response.text();'
+}
+
 export function curlToFetch(parsed: ParsedCurl): string {
   const lines = [`const response = await fetch(${JSON.stringify(parsed.url)}, {`, `  method: ${JSON.stringify(parsed.method)},`]
   const headerKeys = Object.keys(parsed.headers)
@@ -149,8 +189,15 @@ export function curlToFetch(parsed: ParsedCurl): string {
   }
   const bodyExpr = buildFetchBody(parsed)
   if (bodyExpr) lines.push(`  body: ${bodyExpr},`)
-  lines.push('});', 'const data = await response.json();')
+  lines.push('});', inferResponseHandler(parsed))
   return lines.join('\n')
+}
+
+function buildPythonMultipartFields(formData: Record<string, string>): string {
+  const entries = Object.entries(formData)
+    .map(([k, v]) => `    ${JSON.stringify(k)}: (None, ${JSON.stringify(v)}),`)
+    .join('\n')
+  return `{\n${entries}\n  }`
 }
 
 export function curlToPython(parsed: ParsedCurl): string {
@@ -158,36 +205,64 @@ export function curlToPython(parsed: ParsedCurl): string {
   if (Object.keys(parsed.headers).length) {
     lines.push(`headers = ${JSON.stringify(parsed.headers, null, 2)}`)
   }
-  if (Object.keys(parsed.formData).length) {
-    lines.push(`files = ${JSON.stringify(parsed.formData, null, 2)}`)
+  const hasForm = Object.keys(parsed.formData).length > 0
+  if (hasForm) {
+    lines.push(`files = ${buildPythonMultipartFields(parsed.formData)}`)
   } else if (parsed.body) {
     lines.push(`data = ${JSON.stringify(parsed.body)}`)
   }
   const args = ['url']
   if (Object.keys(parsed.headers).length) args.push('headers=headers')
-  if (Object.keys(parsed.formData).length) args.push('data=files')
+  if (hasForm) args.push('files=files')
   else if (parsed.body) args.push('data=data')
   lines.push(`response = requests.${parsed.method.toLowerCase()}(${args.join(', ')})`)
   lines.push('print(response.text)')
   return lines.join('\n')
 }
 
+function buildGoMultipartBody(formData: Record<string, string>): { setup: string; bodyVar: string } {
+  const fields = Object.entries(formData)
+    .map(([k, v]) => `\t_ = bodyWriter.WriteField(${JSON.stringify(k)}, ${JSON.stringify(v)})`)
+    .join('\n')
+  return {
+    setup: `\tbodyBuf := &bytes.Buffer{}
+\tbodyWriter := multipart.NewWriter(bodyBuf)
+${fields}
+\tbodyWriter.Close()
+\tbody := bodyBuf`,
+    bodyVar: 'body',
+  }
+}
+
 export function curlToGo(parsed: ParsedCurl): string {
   const headerLines = Object.entries(parsed.headers)
     .map(([k, v]) => `\treq.Header.Set(${JSON.stringify(k)}, ${JSON.stringify(v)})`)
     .join('\n')
-  const bodyInit = parsed.body ? `strings.NewReader(${JSON.stringify(parsed.body)})` : 'nil'
+
+  const hasForm = Object.keys(parsed.formData).length > 0
+  let imports = '"fmt"\n\t"net/http"\n\t"strings"'
+  let bodyBlock: string
+
+  if (hasForm) {
+    imports = '"bytes"\n\t"fmt"\n\t"mime/multipart"\n\t"net/http"'
+    const multipart = buildGoMultipartBody(parsed.formData)
+    bodyBlock = `${multipart.setup}
+\treq, _ := http.NewRequest(${JSON.stringify(parsed.method)}, ${JSON.stringify(parsed.url)}, ${multipart.bodyVar})
+\treq.Header.Set("Content-Type", bodyWriter.FormDataContentType())`
+  } else {
+    const bodyInit = parsed.body ? `strings.NewReader(${JSON.stringify(parsed.body)})` : 'nil'
+    bodyBlock = `\tbody := ${bodyInit}
+\treq, _ := http.NewRequest(${JSON.stringify(parsed.method)}, ${JSON.stringify(parsed.url)}, body)`
+  }
+
   return `package main
 
 import (
-\t"fmt"
-\t"net/http"
-\t"strings"
+\t${imports}
 )
 
 func main() {
-\tbody := ${bodyInit}
-\treq, _ := http.NewRequest(${JSON.stringify(parsed.method)}, ${JSON.stringify(parsed.url)}, body)
+${bodyBlock}
 ${headerLines}
 \tresp, err := http.DefaultClient.Do(req)
 \tif err != nil { panic(err) }

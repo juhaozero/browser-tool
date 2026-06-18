@@ -310,8 +310,8 @@ export const tools: ToolDefinition[] = [
   },
   {
     id: 'image-to-ico',
-    name: '图片转图标',
-    description: '生成网站 favicon 图标',
+    name: '图片转 Favicon',
+    description: '生成 PNG 格式 favicon，可直接用于网站图标',
     category: 'image',
     tags: ['image', 'ico', 'favicon'],
     icon: ScanLine,

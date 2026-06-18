@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ExampleButton } from '@/components/ExampleButton'
 import { ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 import { marked } from 'marked'
 
 const EXAMPLE_MD = `# Markdown 预览示例
@@ -17,32 +18,16 @@ console.log(hello)
 ## 列表
 
 - 本地运行
-- 数据不上传
+- 绝大多数工具数据不上传
 - 支持深色模式
 
-> 引用：所有处理均在浏览器完成。
+> 引用：绝大多数处理均在浏览器完成。
 
 | 功能 | 状态 |
 |------|------|
 | JSON | ✅ |
 | Base64 | ✅ |
 `
-
-/** 移除危险标签与事件属性，防止 XSS */
-function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  doc.querySelectorAll('script, iframe, object, embed, form, style').forEach((el) => el.remove())
-  doc.querySelectorAll('*').forEach((el) => {
-    for (const attr of [...el.attributes]) {
-      const name = attr.name.toLowerCase()
-      const value = attr.value.trim().toLowerCase()
-      if (name.startsWith('on') || value.startsWith('javascript:') || value.startsWith('data:text/html')) {
-        el.removeAttribute(attr.name)
-      }
-    }
-  })
-  return doc.body.innerHTML
-}
 
 export default function MarkdownPreview() {
   const [markdown, setMarkdown] = useState(EXAMPLE_MD)

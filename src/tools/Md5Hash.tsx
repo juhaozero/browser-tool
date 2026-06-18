@@ -73,7 +73,10 @@ export default function Md5Hash() {
           value={input}
           onChange={(v) => {
             setInput(v)
-            setFileBuffer(null)
+            if (fileBuffer) {
+              setFileBuffer(null)
+              setOutput('')
+            }
           }}
           rows={6}
         />

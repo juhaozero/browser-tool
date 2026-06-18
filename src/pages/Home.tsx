@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Shield, Sparkles, Zap } from 'lucide-react'
 import { categories, tools } from '@/data/tools'
@@ -27,18 +27,13 @@ export default function Home() {
     })
   }, [query, categoryFilter])
 
-  useEffect(() => {
-    setHighlightId(null)
-  }, [categoryFilter])
+  const scrollToTool = (location.state as { scrollToTool?: string } | null)?.scrollToTool
 
-  useEffect(() => {
-    const scrollToTool = (location.state as { scrollToTool?: string } | null)?.scrollToTool
+  useLayoutEffect(() => {
     if (!scrollToTool) return
     if (!filtered.some((t) => t.id === scrollToTool)) return
 
-    setHighlightId(scrollToTool)
-
-    const timer = window.setTimeout(() => {
+    const scrollTimer = window.setTimeout(() => {
       document.getElementById(toolCardId(scrollToTool))?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
@@ -46,13 +41,15 @@ export default function Home() {
       navigate(location.pathname + location.search, { replace: true, state: {} })
     }, 150)
 
+    const highlightTimer = window.setTimeout(() => setHighlightId(scrollToTool), 0)
     const clearHighlight = window.setTimeout(() => setHighlightId(null), 3000)
 
     return () => {
-      clearTimeout(timer)
+      clearTimeout(scrollTimer)
+      clearTimeout(highlightTimer)
       clearTimeout(clearHighlight)
     }
-  }, [location.state, filtered, location.pathname, location.search, navigate])
+  }, [scrollToTool, filtered, location.pathname, location.search, navigate])
 
   const activeCategory = categories.find((c) => c.id === categoryFilter)
 
@@ -67,20 +64,17 @@ export default function Home() {
         <div className="relative px-6 py-10 sm:px-10 sm:py-12">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--accent)_25%,transparent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] px-3 py-1 text-xs font-medium text-[var(--accent)]">
             <Sparkles size={14} />
-            纯浏览器本地运行 
+            绝大多数工具在本地运行
           </div>
 
           <h1 className="mb-4 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
             <span className="text-gradient">浏览器工具箱</span>
           </h1>
-          {/* <p className="mb-8 max-w-xl text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
-            编码、加密、格式化、图片处理等 {tools.length} 款工具。
-          </p> */}
 
           <div className="mb-8 flex flex-wrap gap-3">
             {[
               { icon: Zap, label: `${tools.length} 个工具` },
-              { icon: Shield, label: '本地隐私安全' },
+              { icon: Shield, label: '本地优先，隐私安全' },
               { icon: Sparkles, label: `${categories.length} 大分类` },
             ].map(({ icon: Icon, label }) => (
               <span

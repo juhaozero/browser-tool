@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { Alert, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { hslToRgb, parseHexColor, rgbToHsl } from '@/lib/utils'
@@ -21,29 +21,30 @@ export default function ColorConverter() {
   const [hslText, setHslText] = useState({ h: '192', s: '92', l: '36' })
   const [hexError, setHexError] = useState('')
 
-  const syncFromRgb = (r: number, g: number, b: number) => {
-    setRgb({ r, g, b })
-    setRgbText({ r: String(r), g: String(g), b: String(b) })
-    setHex(rgbToHex(r, g, b))
-    const hslVal = rgbToHsl(r, g, b)
-    setHsl(hslVal)
-    setHslText({ h: String(hslVal.h), s: String(hslVal.s), l: String(hslVal.l) })
-    setHexError('')
-  }
-
-  useEffect(() => {
-    const parsed = parseHexColor(hex)
-    if (!parsed) {
-      if (hex.trim() !== '') setHexError('无效的 HEX 颜色，请输入 #RGB 或 #RRGGBB')
-      return
-    }
-    setHexError('')
+  const applyParsedHex = (parsed: { r: number; g: number; b: number }) => {
     setRgb(parsed)
     setRgbText({ r: String(parsed.r), g: String(parsed.g), b: String(parsed.b) })
     const hslVal = rgbToHsl(parsed.r, parsed.g, parsed.b)
     setHsl(hslVal)
     setHslText({ h: String(hslVal.h), s: String(hslVal.s), l: String(hslVal.l) })
-  }, [hex])
+    setHexError('')
+  }
+
+  const syncFromRgb = (r: number, g: number, b: number) => {
+    const nextHex = rgbToHex(r, g, b)
+    setHex(nextHex)
+    applyParsedHex({ r, g, b })
+  }
+
+  const commitHex = (value: string) => {
+    const parsed = parseHexColor(value)
+    if (!parsed) {
+      if (value.trim() !== '') setHexError('无效的 HEX 颜色，请输入 #RGB 或 #RRGGBB')
+      return
+    }
+    setHex(rgbToHex(parsed.r, parsed.g, parsed.b))
+    applyParsedHex(parsed)
+  }
 
   const updateFromRgbText = (key: 'r' | 'g' | 'b', value: string) => {
     setRgbText((prev) => ({ ...prev, [key]: value }))
@@ -87,7 +88,7 @@ export default function ColorConverter() {
     syncFromRgb(rgbVal.r, rgbVal.g, rgbVal.b)
   }
 
-  const pickerHex = rgbToHex(rgb.r, rgb.g, rgb.b)
+  const pickerHex = parseHexColor(hex) ? hex : rgbToHex(rgb.r, rgb.g, rgb.b)
   const cssRgb = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`
   const cssHsl = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`
 
@@ -103,7 +104,7 @@ export default function ColorConverter() {
             <input
               type="color"
               value={pickerHex}
-              onChange={(e) => setHex(e.target.value)}
+              onChange={(e) => commitHex(e.target.value)}
               aria-label="选择颜色"
               className="color-picker-swatch relative h-20 w-20 shrink-0 cursor-pointer rounded-full border-2 border-[var(--border)] shadow-sm transition hover:scale-105 hover:border-[var(--accent)]"
             />
@@ -179,7 +180,12 @@ export default function ColorConverter() {
       </div>
 
       <ToolSection label="HEX" action={<CopyButton text={hex} />}>
-        <Input value={hex} onChange={setHex} placeholder="#0891b2" />
+        <Input
+          value={hex}
+          onChange={setHex}
+          onBlur={() => commitHex(hex)}
+          placeholder="#0891b2"
+        />
       </ToolSection>
 
       {hexError && <Alert type="error">{hexError}</Alert>}

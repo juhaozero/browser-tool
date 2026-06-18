@@ -40,13 +40,16 @@ export default function TimestampConverter() {
   const [timestampMs, setTimestampMs] = useState('')
   const [datetime, setDatetime] = useState('')
   const [error, setError] = useState('')
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setNow(Date.now())
-    }, 1000)
-    return () => clearInterval(id)
+    const tick = () => setNow(Date.now())
+    const immediate = window.setTimeout(tick, 0)
+    const id = setInterval(tick, 1000)
+    return () => {
+      clearTimeout(immediate)
+      clearInterval(id)
+    }
   }, [])
 
   const fromTimestamp = (ts: string) => {
@@ -111,8 +114,8 @@ export default function TimestampConverter() {
         <Button variant="primary" onClick={useNow}>
           使用当前时间
         </Button>
-        <CopyButton text={String(Math.floor(now / 1000))} label="复制当前秒级时间戳" />
-        <CopyButton text={String(now)} label="复制当前毫秒级时间戳" />
+        <CopyButton text={now ? String(Math.floor(now / 1000)) : ''} label="复制当前秒级时间戳" />
+        <CopyButton text={now ? String(now) : ''} label="复制当前毫秒级时间戳" />
       </div>
 
       {error && <Alert type="error">{error}</Alert>}
@@ -140,10 +143,8 @@ export default function TimestampConverter() {
       <ToolSection label="日期时间 (ISO 8601)">
         <Input
           value={datetime}
-          onChange={(v) => {
-            setDatetime(v)
-            fromDatetime(v)
-          }}
+          onChange={setDatetime}
+          onBlur={() => fromDatetime(datetime)}
           placeholder="2024-01-01T00:00:00"
         />
       </ToolSection>
