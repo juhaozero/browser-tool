@@ -1,6 +1,6 @@
 # Browser Tool — 浏览器工具箱
 
-[license:mit](https://opensource.org/licenses/MIT)
+![GitHub License](https://img.shields.io/github/license/juhaozero/browser-tool)
 
 纯前端工具集。所有工具在浏览器本地运行，**数据不上传服务器**。
 
