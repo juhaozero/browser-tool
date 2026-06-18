@@ -15,7 +15,6 @@ interface ToolLayoutProps {
 export function ToolLayout({ tool, children }: ToolLayoutProps) {
   const Icon = tool.icon
 
-  // 记录最近使用的工具，供首页返回时滚动定位
   useEffect(() => {
     setLastToolId(tool.id)
   }, [tool.id])
@@ -25,21 +24,23 @@ export function ToolLayout({ tool, children }: ToolLayoutProps) {
       <div>
         <Link
           to="/"
-          state={{ scrollToTool: tool.id }} // 通过路由 state 传递滚动目标
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] transition hover:text-[var(--accent)]"
+          state={{ scrollToTool: tool.id }}
+          className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-muted)] shadow-sm transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
         >
           <ArrowLeft size={16} />
           返回工具列表
         </Link>
 
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] text-[var(--accent)]">
-            <Icon size={24} />
+        <div className="flex items-start gap-5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[color-mix(in_srgb,var(--accent)_20%,transparent)] to-[color-mix(in_srgb,var(--accent)_6%,transparent)] text-[var(--accent)] ring-1 ring-[color-mix(in_srgb,var(--accent)_25%,transparent)] shadow-[var(--shadow-card)]">
+            <Icon size={26} strokeWidth={2} />
           </div>
-          <div>
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{tool.name}</h1>
-              <span className="rounded-full bg-[var(--bg-muted)] px-2.5 py-0.5 text-xs text-[var(--text-muted)]">
+          <div className="min-w-0 pt-0.5">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
+                {tool.name}
+              </h1>
+              <span className="rounded-lg bg-[var(--bg-muted)] px-2.5 py-1 text-xs font-medium text-[var(--text-muted)]">
                 {getCategoryLabel(tool.category)}
               </span>
             </div>
@@ -48,10 +49,10 @@ export function ToolLayout({ tool, children }: ToolLayoutProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,transparent)] px-3 py-2 text-sm text-[var(--success)]">
-        <ShieldCheck size={16} className="shrink-0" />
-        所有处理均在浏览器本地完成，数据不会上传到任何服务器
-      </div>
+      {/* <div className="flex items-center gap-2.5 rounded-xl border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_6%,transparent)] px-4 py-3 text-sm text-[var(--success)]">
+        <ShieldCheck size={17} className="shrink-0" />
+        所有处理均在浏览器本地完成
+      </div> */}
 
       {children}
     </div>

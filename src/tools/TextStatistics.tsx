@@ -3,7 +3,7 @@ import { ExampleButton } from '@/components/ExampleButton'
 import { ToolPanel, ToolSection, TextArea } from '@/components/ui'
 
 const EXAMPLE =
-  'Browser Tool 是一款纯浏览器本地运行的开发者工具箱。\n\n它支持 JSON 格式化、Base64 编解码、JWT 解析等功能。所有数据不上传服务器，保护你的隐私。'
+  'Browser Tool 是一款纯浏览器本地运行的工具箱。\n\n它支持 JSON 格式化、Base64 编解码、JWT 解析等功能。所有数据不上传服务器，保护你的隐私。'
 
 function countWords(text: string): number {
   const en = text.match(/[a-zA-Z]+/g)?.length ?? 0

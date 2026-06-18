@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, monospace;
   --color-brand-50: #ecfeff;
   --color-brand-100: #cffafe;
@@ -17,34 +17,46 @@
 
 :root {
   color-scheme: light;
-  --bg: #f8fafc;
+  --bg: #f4f7fb;
   --bg-elevated: #ffffff;
-  --bg-muted: #f1f5f9;
+  --bg-muted: #eef2f7;
   --border: #e2e8f0;
   --text: #0f172a;
   --text-muted: #64748b;
   --accent: #0891b2;
   --accent-hover: #0e7490;
+  --accent-soft: #ecfeff;
   --success: #059669;
   --error: #dc2626;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(15, 23, 42, 0.06), 0 16px 40px rgba(8, 145, 178, 0.12);
+  --hero-glow: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .dark {
   color-scheme: dark;
-  --bg: #0b1120;
-  --bg-elevated: #111827;
-  --bg-muted: #1e293b;
-  --border: #334155;
+  --bg: #070b14;
+  --bg-elevated: #0f172a;
+  --bg-muted: #1a2332;
+  --border: #2a3548;
   --text: #f1f5f9;
   --text-muted: #94a3b8;
   --accent: #22d3ee;
   --accent-hover: #67e8f9;
+  --accent-soft: #083344;
   --success: #34d399;
   --error: #f87171;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.25), 0 16px 40px rgba(34, 211, 238, 0.08);
+  --hero-glow: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
@@ -56,11 +68,36 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 10% -10%, var(--hero-glow), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, var(--bg-muted) 40%, var(--bg)) 100%);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* 首页 hero 点阵背景 */
+.hero-grid {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+}
+
+/* 渐变标题 */
+.text-gradient {
+  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark .text-gradient {
+  background: linear-gradient(135deg, #f8fafc 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
