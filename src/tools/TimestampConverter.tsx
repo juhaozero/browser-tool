@@ -7,7 +7,7 @@ import { validateNumericTimestamp } from '@/lib/input-validation'
 function detectUnit(ts: number): 's' | 'ms' | 'µs' | 'ns' {
   if (ts > 1e18) return 'ns'
   if (ts > 1e15) return 'µs'
-  if (ts > 1e12) return 'ms'
+  if (ts >= 1e12) return 'ms'
   return 's'
 }
 
@@ -60,6 +60,8 @@ export default function TimestampConverter() {
     const validated = validateNumericTimestamp(ts, '时间戳')
     if (typeof validated === 'string') {
       setError(validated)
+      setTimestampMs('')
+      setDatetime('')
       return
     }
     setError('')
@@ -75,6 +77,8 @@ export default function TimestampConverter() {
     const validated = validateNumericTimestamp(tsMs, '毫秒时间戳')
     if (typeof validated === 'string') {
       setError(validated)
+      setTimestamp('')
+      setDatetime('')
       return
     }
     setError('')
@@ -89,6 +93,8 @@ export default function TimestampConverter() {
     const date = new Date(dt)
     if (Number.isNaN(date.getTime())) {
       setError('请输入有效的 ISO 8601 日期时间，如 2024-01-01T00:00:00')
+      setTimestamp('')
+      setTimestampMs('')
       return
     }
     setError('')

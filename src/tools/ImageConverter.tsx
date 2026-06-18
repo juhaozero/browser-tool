@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
-import { convertImageFormat } from '@/lib/image-utils'
+import { convertImageFormat, computeOutputDimensions, validateImageDimensions } from '@/lib/image-utils'
 import {
   MAX_IMAGE_DIMENSION,
   parseIntInRange,
@@ -61,7 +61,20 @@ export default function ImageConverter({
     setPreview(url)
     setError('')
     const img = new Image()
-    img.onload = () => setOriginalSize({ w: img.width, h: img.height })
+    img.onload = () => {
+      try {
+        validateImageDimensions(img.width, img.height)
+        setOriginalSize({ w: img.width, h: img.height })
+      } catch (e) {
+        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = ''
+        setPreview('')
+        setFile(null)
+        setOriginalSize({ w: 0, h: 0 })
+        setError(e instanceof Error ? e.message : '图片尺寸无效')
+      }
+    }
+    img.onerror = () => setError('图片加载失败')
     img.src = url
   }
 
@@ -73,20 +86,14 @@ export default function ImageConverter({
 
   const outputSize = () => {
     if (!originalSize.w) return null
-    const scale = (parseInt(scalePercent, 10) || 100) / 100
-    let w = Math.round(originalSize.w * scale)
-    let h = Math.round(originalSize.h * scale)
-    const mw = maxWidth ? parseInt(maxWidth, 10) : 0
-    const mh = maxHeight ? parseInt(maxHeight, 10) : 0
-    if (mw && w > mw) {
-      h = Math.round((h * mw) / w)
-      w = mw
-    }
-    if (mh && h > mh) {
-      w = Math.round((w * mh) / h)
-      h = mh
-    }
-    return { w, h }
+    const scale = parseInt(scalePercent, 10) || 100
+    const mw = maxWidth ? parseInt(maxWidth, 10) : undefined
+    const mh = maxHeight ? parseInt(maxHeight, 10) : undefined
+    return computeOutputDimensions(originalSize.w, originalSize.h, {
+      scalePercent: scale,
+      maxWidth: mw && mw > 0 ? mw : undefined,
+      maxHeight: mh && mh > 0 ? mh : undefined,
+    })
   }
 
   const convert = async () => {
@@ -248,6 +255,10 @@ export function ImageToIco() {
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
+    if (!f.type.startsWith('image/')) {
+      setError('请选择图片文件')
+      return
+    }
     setFile(f)
     setError('')
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)

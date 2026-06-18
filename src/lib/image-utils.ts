@@ -3,6 +3,8 @@
  * 基于 Canvas API 在本地完成缩放与格式转换，不依赖服务端
  */
 
+import { MAX_IMAGE_DIMENSION } from '@/lib/input-validation'
+
 export interface ImageConvertOptions {
   quality?: number // 0~1，仅对有损格式（JPEG/WebP/AVIF）生效
   scalePercent?: number // 相对原图缩放百分比
@@ -11,13 +13,25 @@ export interface ImageConvertOptions {
   smoothingQuality?: ImageSmoothingQuality // 缩放插值质量，影响速度与清晰度
 }
 
+/** 校验原图单边尺寸，避免解码超大图导致浏览器 OOM */
+export function validateImageDimensions(width: number, height: number): void {
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`图片尺寸过大，单边不得超过 ${MAX_IMAGE_DIMENSION}px`)
+  }
+}
+
 export function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
-      resolve(img)
+      try {
+        validateImageDimensions(img.width, img.height)
+        resolve(img)
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error('图片尺寸无效'))
+      }
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
@@ -42,12 +56,13 @@ export function canvasToBlob(
 }
 
 /** 根据缩放比例与最大宽高约束计算输出尺寸 */
-function resolveDimensions(
-  img: HTMLImageElement,
+function resolveDimensionsFromSize(
+  sourceW: number,
+  sourceH: number,
   options: ImageConvertOptions,
 ): { w: number; h: number } {
-  let w = img.width
-  let h = img.height
+  let w = sourceW
+  let h = sourceH
 
   if (options.scalePercent && options.scalePercent !== 100) {
     w = Math.round((w * options.scalePercent) / 100)
@@ -63,7 +78,33 @@ function resolveDimensions(
     h = options.maxHeight
   }
 
-  return { w: Math.max(1, w), h: Math.max(1, h) }
+  return capDimensions(Math.max(1, w), Math.max(1, h), MAX_IMAGE_DIMENSION)
+}
+
+function resolveDimensions(
+  img: HTMLImageElement,
+  options: ImageConvertOptions,
+): { w: number; h: number } {
+  return resolveDimensionsFromSize(img.width, img.height, options)
+}
+
+/** 根据原图尺寸与转换选项估算输出宽高（供 UI 预览） */
+export function computeOutputDimensions(
+  sourceW: number,
+  sourceH: number,
+  options: Pick<ImageConvertOptions, 'scalePercent' | 'maxWidth' | 'maxHeight'> = {},
+): { w: number; h: number } {
+  return resolveDimensionsFromSize(sourceW, sourceH, options)
+}
+
+/** 等比缩放到不超过 maxDim，防止超大 Canvas 导致浏览器卡死 */
+function capDimensions(w: number, h: number, maxDim: number): { w: number; h: number } {
+  if (w <= maxDim && h <= maxDim) return { w, h }
+  const ratio = Math.min(maxDim / w, maxDim / h)
+  return {
+    w: Math.max(1, Math.round(w * ratio)),
+    h: Math.max(1, Math.round(h * ratio)),
+  }
 }
 
 export async function resizeImage(

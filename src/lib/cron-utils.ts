@@ -50,7 +50,11 @@ function matchDowField(value: number, field: string): boolean {
 }
 
 function validateCronField(field: string, min: number, max: number, name: string): string | null {
-  if (field === '?' || field === '*') return null
+  if (field === '?') {
+    if (name !== '日' && name !== '周') return `${name}字段不支持 ?，仅日/周字段可用`
+    return null
+  }
+  if (field === '*') return null
 
   const checkValue = (raw: string): string | null => {
     const n = parseInt(raw, 10)
@@ -106,6 +110,9 @@ export function validateCron(expr: string): string | null {
     const err = validateCronField(field, min, max, name)
     if (err) return err
   }
+  if (parts[2] === '?' && parts[4] === '?') {
+    return '日字段与周字段不能同时为 ?'
+  }
   return null
 }
 
@@ -132,7 +139,7 @@ function matchesDomDow(
   dayField: string,
   dowField: string,
 ): boolean {
-  const domWildcard = dayField === '*'
+  const domWildcard = dayField === '*' || dayField === '?'
   const dowWildcard = dowField === '*' || dowField === '?'
   const domMatch = matchField(dayOfMonth, dayField)
   const dowMatch = matchDowField(dayOfWeek, dowField)

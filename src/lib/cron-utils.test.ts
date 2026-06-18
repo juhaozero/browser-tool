@@ -13,6 +13,18 @@ describe('validateCron', () => {
   it('rejects invalid step', () => {
     expect(validateCron('*/0 * * * *')).toMatch(/步长无效/)
   })
+
+  it('rejects ? in month field', () => {
+    expect(validateCron('0 0 1 ? 1')).toMatch(/不支持/)
+  })
+
+  it('accepts ? in day field with dow specified', () => {
+    expect(validateCron('0 9 ? * 1')).toBeNull()
+  })
+
+  it('rejects ? in both day and dow fields', () => {
+    expect(validateCron('0 0 ? * ?')).toMatch(/不能同时为/)
+  })
 })
 
 describe('getNextCronRuns', () => {

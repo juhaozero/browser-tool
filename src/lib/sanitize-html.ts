@@ -12,19 +12,45 @@ const BLOCKED_TAGS = new Set([
   'base',
   'svg',
   'math',
+  'video',
+  'audio',
+  'frame',
+  'frameset',
 ])
 
 const UNSAFE_ATTR_PREFIXES = ['on']
-const UNSAFE_ATTR_VALUES = ['javascript:', 'vbscript:', 'data:text/html']
+const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'srcset', 'poster', 'background', 'formaction'])
+/** style 内嵌 CSS 注入特征 */
+const UNSAFE_STYLE_RE =
+  /javascript:|vbscript:|data:|expression\s*\(|@import|behavior\s*:|-moz-binding/i
+
+function isUnsafeUrl(value: string): boolean {
+  const lower = value.trim().toLowerCase()
+  if (lower.startsWith('javascript:') || lower.startsWith('vbscript:')) return true
+  // 预览场景禁止 data: / blob: URI
+  if (lower.startsWith('data:') || lower.startsWith('blob:')) return true
+  return false
+}
+
+function isUnsafeStyle(value: string): boolean {
+  return UNSAFE_STYLE_RE.test(value)
+}
 
 function isUnsafeAttribute(name: string, value: string): boolean {
   const lowerName = name.toLowerCase()
-  const lowerValue = value.trim().toLowerCase()
   if (UNSAFE_ATTR_PREFIXES.some((p) => lowerName.startsWith(p))) return true
-  if (lowerName === 'href' || lowerName === 'src' || lowerName === 'xlink:href') {
-    return UNSAFE_ATTR_VALUES.some((v) => lowerValue.startsWith(v))
+  if (lowerName === 'style') return isUnsafeStyle(value)
+
+  if (lowerName === 'srcset') {
+    return value.split(',').some((part) => {
+      const url = part.trim().split(/\s+/)[0]
+      return url ? isUnsafeUrl(url) : false
+    })
   }
-  return lowerValue.startsWith('javascript:') || lowerValue.startsWith('data:text/html')
+
+  if (URL_ATTRS.has(lowerName)) return isUnsafeUrl(value)
+
+  return isUnsafeUrl(value)
 }
 
 export function sanitizeHtml(html: string): string {
