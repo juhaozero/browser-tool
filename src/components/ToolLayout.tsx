@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ShieldCheck } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import type { ToolDefinition } from '@/types/tool'
 import { getCategoryLabel } from '@/data/tools'
 import { setLastToolId } from '@/lib/last-tool'
