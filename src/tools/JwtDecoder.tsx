@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { BASE64URL_PART_RE } from '@/lib/input-validation'
 import { decodeJwtPart, formatJson } from '@/lib/utils'
 
 const EXAMPLE_JWT =
@@ -15,6 +16,9 @@ export default function JwtDecoder() {
     try {
       const parts = input.trim().replace(/^Bearer\s+/i, '').split('.')
       if (parts.length < 2) throw new Error('JWT 格式无效，至少需要 Header 和 Payload 两部分')
+      if (!parts.every((part) => BASE64URL_PART_RE.test(part))) {
+        throw new Error('JWT 格式无效，各段须为 Base64URL 字符')
+      }
       const header = formatJson(decodeJwtPart(parts[0]))
       const payload = formatJson(decodeJwtPart(parts[1]))
       return { header, payload, error: '' }

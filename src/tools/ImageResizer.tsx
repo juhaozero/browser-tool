@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
 import { loadImage } from '@/lib/image-utils'
+import { MAX_IMAGE_DIMENSION, parseIntInRange } from '@/lib/input-validation'
 
 export default function ImageResizer() {
   const [file, setFile] = useState<File | null>(null)
@@ -17,6 +18,10 @@ export default function ImageResizer() {
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
+    if (!f.type.startsWith('image/')) {
+      setError('请选择图片文件')
+      return
+    }
     setFile(f)
     setError('')
     try {
@@ -41,10 +46,20 @@ export default function ImageResizer() {
   const resize = async () => {
     if (!file || !canvasRef.current) return
     setError('')
+    const widthParsed = parseIntInRange(width, 1, MAX_IMAGE_DIMENSION, '宽度')
+    if (!widthParsed.ok) {
+      setError(widthParsed.error)
+      return
+    }
+    const heightParsed = parseIntInRange(height, 1, MAX_IMAGE_DIMENSION, '高度')
+    if (!heightParsed.ok) {
+      setError(heightParsed.error)
+      return
+    }
     try {
       const img = await loadImage(file)
-      let w = parseInt(width, 10) || img.width
-      let h = parseInt(height, 10) || img.height
+      let w = widthParsed.value
+      let h = heightParsed.value
       if (keepAspect) {
         const ratio = Math.min(w / img.width, h / img.height)
         w = Math.round(img.width * ratio)

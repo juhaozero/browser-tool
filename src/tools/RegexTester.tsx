@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { REGEX_FLAGS_RE } from '@/lib/input-validation'
 
 const EXAMPLE_PATTERN = '\\d{3,4}-\\d{7,8}'
 const EXAMPLE_TEXT = '联系电话：010-12345678，手机：13812345678'
@@ -13,6 +14,13 @@ export default function RegexTester() {
 
   const result = useMemo(() => {
     if (!pattern) return { matches: [] as RegExpMatchArray[], error: '', replaced: '' }
+    if (flags && !REGEX_FLAGS_RE.test(flags)) {
+      return {
+        matches: [] as RegExpMatchArray[],
+        error: 'Flags 仅支持 g、i、m、s、u、y',
+        replaced: '',
+      }
+    }
     try {
       const regex = new RegExp(pattern, flags)
       const matches = [...text.matchAll(regex)]

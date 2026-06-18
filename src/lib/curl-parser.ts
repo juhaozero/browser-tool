@@ -2,6 +2,7 @@
  * cURL 命令解析与多语言代码生成
  * 支持常见 -X / -H / -d / -F 参数，多行续行符会被展平
  */
+import { validateHttpUrl } from '@/lib/input-validation'
 export interface ParsedCurl {
   method: string
   url: string
@@ -60,6 +61,8 @@ export function parseCurl(input: string): ParsedCurl | string {
   }
 
   if (!url) return '未能解析 URL'
+  const urlError = validateHttpUrl(url)
+  if (urlError) return urlError
   return { method, url, headers, body, formData }
 }
 

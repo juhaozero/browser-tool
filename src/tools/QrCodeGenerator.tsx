@@ -4,6 +4,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { downloadDataUrl } from '@/lib/download'
+import { MAX_QR_TEXT_LENGTH, parseIntInRange } from '@/lib/input-validation'
 
 const EXAMPLE_TEXT = 'https://github.com'
 
@@ -24,10 +25,27 @@ export default function QrCodeGenerator() {
       setError('')
       return
     }
+    if (text.length > MAX_QR_TEXT_LENGTH) {
+      setDataUrl('')
+      setError(`内容过长（超过 ${MAX_QR_TEXT_LENGTH} 字符），无法生成二维码`)
+      return
+    }
+    const sizeParsed = parseIntInRange(size, 64, 2048, '尺寸')
+    if (!sizeParsed.ok) {
+      setDataUrl('')
+      setError(sizeParsed.error)
+      return
+    }
+    const marginParsed = parseIntInRange(margin, 0, 10, '边距')
+    if (!marginParsed.ok) {
+      setDataUrl('')
+      setError(marginParsed.error)
+      return
+    }
     let cancelled = false
     QRCode.toDataURL(text, {
-      width: parseInt(size, 10) || 256,
-      margin: parseInt(margin, 10) || 2,
+      width: sizeParsed.value,
+      margin: marginParsed.value,
       errorCorrectionLevel: ecLevel,
       color: { dark: darkColor, light: lightColor },
     })

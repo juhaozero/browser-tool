@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
 import { convertImageFormat } from '@/lib/image-utils'
+import {
+  MAX_IMAGE_DIMENSION,
+  parseIntInRange,
+  parseOptionalIntInRange,
+} from '@/lib/input-validation'
 
 interface ImageConverterProps {
   mime: string
@@ -45,6 +50,10 @@ export default function ImageConverter({
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
+    if (!f.type.startsWith('image/')) {
+      setError('请选择图片文件')
+      return
+    }
     setFile(f)
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     const url = URL.createObjectURL(f)
@@ -82,14 +91,36 @@ export default function ImageConverter({
 
   const convert = async () => {
     if (!file) return
+    const scaleParsed = parseIntInRange(scalePercent, 10, 200, '缩放比例')
+    if (!scaleParsed.ok) {
+      setError(scaleParsed.error)
+      return
+    }
+    const maxWidthParsed = parseOptionalIntInRange(maxWidth, 1, MAX_IMAGE_DIMENSION, '最大宽度')
+    if (!maxWidthParsed.ok) {
+      setError(maxWidthParsed.error)
+      return
+    }
+    const maxHeightParsed = parseOptionalIntInRange(maxHeight, 1, MAX_IMAGE_DIMENSION, '最大高度')
+    if (!maxHeightParsed.ok) {
+      setError(maxHeightParsed.error)
+      return
+    }
+    if (supportsQuality) {
+      const qualityParsed = parseIntInRange(quality, 10, 100, '输出质量')
+      if (!qualityParsed.ok) {
+        setError(qualityParsed.error)
+        return
+      }
+    }
     setLoading(true)
     setError('')
     try {
       const blob = await convertImageFormat(file, mime, {
         quality: supportsQuality ? (parseInt(quality, 10) || defaultQuality) / 100 : undefined,
-        scalePercent: parseInt(scalePercent, 10) || 100,
-        maxWidth: maxWidth ? parseInt(maxWidth, 10) : undefined,
-        maxHeight: maxHeight ? parseInt(maxHeight, 10) : undefined,
+        scalePercent: scaleParsed.value,
+        maxWidth: maxWidthParsed.value,
+        maxHeight: maxHeightParsed.value,
         smoothingQuality: speed as ImageSmoothingQuality,
       })
       downloadBlob(blob, `${file.name.replace(/\.[^.]+$/, '')}.${ext}`)

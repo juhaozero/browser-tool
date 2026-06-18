@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
+import { BASE64_RE, isBlank, MAX_DATA_URI_LENGTH } from '@/lib/input-validation'
 
 const EXAMPLE_DATA_URI =
   'data:text/plain;charset=utf-8,Hello%2C%20Browser%20Tool!%20%E8%BF%99%E6%98%AF%E4%B8%80%E6%9D%A1%E7%A4%BA%E4%BE%8B%E6%96%87%E6%9C%AC%E3%80%82'
@@ -17,6 +18,14 @@ export default function DataUriConverter() {
     setInfo(null)
     bytesRef.current = null
     const trimmed = input.trim()
+    if (isBlank(trimmed)) {
+      setError('请输入 Data URI')
+      return
+    }
+    if (trimmed.length > MAX_DATA_URI_LENGTH) {
+      setError('Data URI 过大，请控制在 10MB 以内')
+      return
+    }
     if (!trimmed.startsWith('data:')) {
       setError('无效的 Data URI，需以 data: 开头')
       return
@@ -29,7 +38,8 @@ export default function DataUriConverter() {
       const data = match[3]
       let bytes: Uint8Array
       if (isBase64) {
-        const binary = atob(data)
+        if (!BASE64_RE.test(data)) throw new Error('Base64 数据格式无效')
+        const binary = atob(data.replace(/\s/g, ''))
         bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
       } else {
         bytes = new TextEncoder().encode(decodeURIComponent(data))

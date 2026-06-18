@@ -23,6 +23,11 @@ export default function Base64Tool() {
   }
 
   const decode = () => {
+    if (!input.trim()) {
+      setError('请输入 Base64 字符串')
+      setOutput('')
+      return
+    }
     try {
       setOutput(base64Decode(input))
       setError('')

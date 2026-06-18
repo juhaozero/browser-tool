@@ -1,16 +1,23 @@
 import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
-import { Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { Alert, Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { generateUuidV4 } from '@/lib/utils'
+import { parseIntInRange } from '@/lib/input-validation'
 
 export default function UuidGenerator() {
   const [count, setCount] = useState('5')
   const [uuids, setUuids] = useState<string[]>([])
+  const [error, setError] = useState('')
 
   const generate = () => {
-    const n = Math.min(Math.max(parseInt(count, 10) || 1, 1), 100)
-    setUuids(Array.from({ length: n }, () => generateUuidV4()))
+    const parsed = parseIntInRange(count, 1, 100, '生成数量')
+    if (!parsed.ok) {
+      setError(parsed.error)
+      return
+    }
+    setError('')
+    setUuids(Array.from({ length: parsed.value }, () => generateUuidV4()))
   }
 
   const output = uuids.join('\n')
@@ -27,6 +34,8 @@ export default function UuidGenerator() {
           生成 UUID v4
         </Button>
       </div>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       {uuids.length > 0 && (
         <ToolSection label={`已生成 ${uuids.length} 个`} action={<CopyButton text={output} />}>

@@ -11,6 +11,11 @@ export default function UrlEncoder() {
   const [error, setError] = useState('')
 
   const encode = (component: boolean) => {
+    if (!input.trim()) {
+      setError('请输入要编码的内容')
+      setOutput('')
+      return
+    }
     try {
       setOutput(component ? encodeURIComponent(input) : encodeURI(input))
       setError('')
@@ -20,6 +25,11 @@ export default function UrlEncoder() {
   }
 
   const decode = (component: boolean) => {
+    if (!input.trim()) {
+      setError('请输入要解码的内容')
+      setOutput('')
+      return
+    }
     try {
       setOutput(component ? decodeURIComponent(input) : decodeURI(input))
       setError('')

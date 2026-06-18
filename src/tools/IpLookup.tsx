@@ -258,7 +258,13 @@ export default function IpLookup() {
   const lookup = async (target?: string) => {
     const query = target !== undefined ? target : ip.trim()
 
-    if (target !== '') {
+    if (target === undefined && !ip.trim()) {
+      setError('请输入 IP 或域名')
+      setInfo(null)
+      return
+    }
+
+    if (target !== '' && query) {
       const validationError = validateQuery(query)
       if (validationError) {
         setError(validationError)

@@ -72,7 +72,10 @@ export function base64Encode(text: string): string {
 }
 
 export function base64Decode(base64: string): string {
-  const binary = atob(base64.replace(/\s/g, ''))
+  const cleaned = base64.replace(/\s/g, '')
+  if (!cleaned) throw new Error('Base64 不能为空')
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) throw new Error('Base64 格式无效')
+  const binary = atob(cleaned)
   const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
   return new TextDecoder().decode(bytes)
 }
@@ -220,8 +223,11 @@ export function hslToRgb(h: number, s: number, l: number): { r: number; g: numbe
   }
 }
 
+import { BASE64URL_PART_RE } from '@/lib/input-validation'
+
 /** 解码 JWT 单段（Header 或 Payload），Base64URL → JSON */
 export function decodeJwtPart(part: string): unknown {
+  if (!BASE64URL_PART_RE.test(part)) throw new Error('JWT 段格式无效')
   const padded = part.replace(/-/g, '+').replace(/_/g, '/')
   const json = atob(padded.padEnd(padded.length + ((4 - (padded.length % 4)) % 4), '='))
   return JSON.parse(json)

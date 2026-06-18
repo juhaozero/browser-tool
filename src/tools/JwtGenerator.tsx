@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { signJwt } from '@/lib/jwt-sign'
+import { parseJsonObject } from '@/lib/input-validation'
 
 const EXAMPLE_HEADER = '{\n  "alg": "HS256",\n  "typ": "JWT"\n}'
 const EXAMPLE_PAYLOAD = '{\n  "sub": "1234567890",\n  "name": "张三",\n  "iat": 1516239022,\n  "exp": 1893456000\n}'
@@ -28,8 +29,10 @@ export default function JwtGenerator() {
   const generate = async () => {
     setError('')
     try {
-      const headerObj = JSON.parse(header) as Record<string, unknown>
-      const payloadObj = JSON.parse(payload) as Record<string, unknown>
+      const headerObj = parseJsonObject(header, 'Header')
+      if (typeof headerObj === 'string') throw new Error(headerObj)
+      const payloadObj = parseJsonObject(payload, 'Payload')
+      if (typeof payloadObj === 'string') throw new Error(payloadObj)
       headerObj.alg = algorithm
       headerObj.typ = headerObj.typ ?? 'JWT'
       if (!secret.trim()) throw new Error('请填写密钥')

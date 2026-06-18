@@ -49,18 +49,62 @@ function matchDowField(value: number, field: string): boolean {
   return value === target
 }
 
+function validateCronField(field: string, min: number, max: number, name: string): string | null {
+  if (field === '?' || field === '*') return null
+
+  const checkValue = (raw: string): string | null => {
+    const n = parseInt(raw, 10)
+    if (Number.isNaN(n)) return `${name}字段格式无效: ${raw}`
+    const limitMin = name === '周' && n === 7 ? 0 : min
+    const limitMax = name === '周' && n === 0 ? 7 : max
+    const normalized = name === '周' && n === 7 ? 0 : n
+    if (normalized < limitMin || normalized > limitMax) {
+      return `${name}字段值 ${raw} 超出范围 [${min}-${max}]`
+    }
+    return null
+  }
+
+  if (field.includes('/')) {
+    const [base, step] = field.split('/')
+    const stepN = parseInt(step, 10)
+    if (!Number.isInteger(stepN) || stepN < 1) return `${name}字段步长无效: ${field}`
+    if (base !== '*') {
+      const err = checkValue(base)
+      if (err) return err
+    }
+    return null
+  }
+
+  if (field.includes('-')) {
+    const [a, b] = field.split('-')
+    const errA = checkValue(a)
+    if (errA) return errA
+    const errB = checkValue(b)
+    if (errB) return errB
+    if (parseInt(a, 10) > parseInt(b, 10)) return `${name}字段范围无效: ${field}`
+    return null
+  }
+
+  if (field.includes(',')) {
+    for (const part of field.split(',')) {
+      const err = validateCronField(part.trim(), min, max, name)
+      if (err) return err
+    }
+    return null
+  }
+
+  return checkValue(field)
+}
+
 export function validateCron(expr: string): string | null {
   const parts = expr.trim().split(/\s+/)
   if (parts.length !== 5) return 'Cron 表达式需要 5 个字段：分 时 日 月 周'
   for (let i = 0; i < 5; i++) {
     const { min, max, name } = FIELD_RANGES[i]
     const field = parts[i]
-    if (field === '?') continue
     if (!/^[\d*,/?-]+$/.test(field)) return `${name}字段格式无效: ${field}`
-    if (!field.includes('*') && !field.includes('/') && !field.includes('-') && !field.includes(',')) {
-      const n = parseInt(field, 10)
-      if (n < min || n > max) return `${name}字段值 ${n} 超出范围 [${min}-${max}]`
-    }
+    const err = validateCronField(field, min, max, name)
+    if (err) return err
   }
   return null
 }

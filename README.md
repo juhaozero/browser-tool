@@ -1,6 +1,8 @@
 # Browser Tool — 浏览器工具箱
 
-纯前端开发者工具集。所有工具在浏览器本地运行，**数据不上传服务器**，无需安装、无需注册。
+[license:mit](https://opensource.org/licenses/MIT)
+
+纯前端工具集。所有工具在浏览器本地运行，**数据不上传服务器**。
 
 ## 特性
 
@@ -20,7 +22,7 @@ pnpm run build    # 生产构建，输出到 dist/
 pnpm run preview  # 本地预览构建结果，默认 http://localhost:4173
 ```
 
-**P自定义端口？**
+**自定义端口**
 
 任选一种方式即可：
 
@@ -76,4 +78,4 @@ pnpm run preview   # 本地验证 dist/ 是否正常
 
 ## License
 
-MIT
+MIT 

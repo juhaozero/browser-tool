@@ -3,6 +3,8 @@
  * 密钥通过 PBKDF2 从密码派生，密文以 JSON 信封格式存储 salt/iv/ciphertext
  */
 
+import { BASE64_RE, isJsonObject } from '@/lib/input-validation'
+
 function toBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer)
   let binary = ''
@@ -39,6 +41,25 @@ export interface AesEnvelope {
   ciphertext: string
 }
 
+export function validateAesEnvelope(value: unknown): string | null {
+  if (!isJsonObject(value)) return '密文格式不正确，需要 JSON 对象'
+  const { salt, iv, ciphertext } = value
+  if (typeof salt !== 'string' || typeof iv !== 'string' || typeof ciphertext !== 'string') {
+    return '密文格式不正确，缺少 salt、iv 或 ciphertext 字段'
+  }
+  for (const field of [salt, iv, ciphertext]) {
+    if (!field || !BASE64_RE.test(field)) return '密文字段不是有效的 Base64 编码'
+  }
+  return null
+}
+
+export function parseAesEnvelope(value: unknown): AesEnvelope | string {
+  const error = validateAesEnvelope(value)
+  if (error) return error
+  const envelope = value as AesEnvelope
+  return envelope
+}
+
 export async function aesEncrypt(plaintext: string, password: string): Promise<AesEnvelope> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const iv = crypto.getRandomValues(new Uint8Array(12)) // GCM 推荐 12 字节 IV
@@ -56,6 +77,8 @@ export async function aesEncrypt(plaintext: string, password: string): Promise<A
 }
 
 export async function aesDecrypt(envelope: AesEnvelope, password: string): Promise<string> {
+  const envelopeError = validateAesEnvelope(envelope)
+  if (envelopeError) throw new Error(envelopeError)
   const salt = fromBase64(envelope.salt)
   const iv = fromBase64(envelope.iv)
   const ciphertext = fromBase64(envelope.ciphertext)

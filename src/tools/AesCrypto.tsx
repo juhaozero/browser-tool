@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
-import { aesDecrypt, aesEncrypt } from '@/lib/crypto-aes'
+import { aesDecrypt, aesEncrypt, parseAesEnvelope } from '@/lib/crypto-aes'
+import { parseJsonObject } from '@/lib/input-validation'
 import { formatJson } from '@/lib/utils'
 
 const EXAMPLE_PLAIN = 'Hello, Browser Tool! 这是一条机密消息。'
@@ -39,13 +40,16 @@ export default function AesCrypto() {
     try {
       if (!pwd) throw new Error('请填写密码')
       if (!cipher.trim()) throw new Error('请填写密文')
-      const envelope = JSON.parse(cipher)
+      const envelopeParsed = parseJsonObject(cipher, '密文')
+      if (typeof envelopeParsed === 'string') throw new Error(envelopeParsed)
+      const envelope = parseAesEnvelope(envelopeParsed)
+      if (typeof envelope === 'string') throw new Error(envelope)
       const plain = await aesDecrypt(envelope, pwd)
       if (opId !== opIdRef.current) return
       setOutput(plain)
-    } catch {
+    } catch (e) {
       if (opId !== opIdRef.current) return
-      setError('解密失败，请检查密文和密码')
+      setError(e instanceof Error ? e.message : '解密失败，请检查密文和密码')
     }
   }
 

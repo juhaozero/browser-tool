@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
-import { Button, Input, ToolPanel, ToolSection } from '@/components/ui'
+import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
+import { validateNumericTimestamp } from '@/lib/input-validation'
 
 function detectUnit(ts: number): 's' | 'ms' | 'µs' | 'ns' {
   if (ts > 1e18) return 'ns'
@@ -38,6 +39,7 @@ export default function TimestampConverter() {
   const [timestamp, setTimestamp] = useState('')
   const [timestampMs, setTimestampMs] = useState('')
   const [datetime, setDatetime] = useState('')
+  const [error, setError] = useState('')
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -48,35 +50,61 @@ export default function TimestampConverter() {
   }, [])
 
   const fromTimestamp = (ts: string) => {
-    const num = Number(ts)
-    if (!Number.isFinite(num)) return
-    const unit = detectUnit(num)
-    syncFromMs(toMs(num, unit), setTimestamp, setTimestampMs, setDatetime)
+    if (!ts.trim()) {
+      setError('')
+      return
+    }
+    const validated = validateNumericTimestamp(ts, '时间戳')
+    if (typeof validated === 'string') {
+      setError(validated)
+      return
+    }
+    setError('')
+    const unit = detectUnit(validated)
+    syncFromMs(toMs(validated, unit), setTimestamp, setTimestampMs, setDatetime)
   }
 
   const fromTimestampMs = (tsMs: string) => {
-    const num = Number(tsMs)
-    if (!Number.isFinite(num)) return
-    syncFromMs(num, setTimestamp, setTimestampMs, setDatetime)
+    if (!tsMs.trim()) {
+      setError('')
+      return
+    }
+    const validated = validateNumericTimestamp(tsMs, '毫秒时间戳')
+    if (typeof validated === 'string') {
+      setError(validated)
+      return
+    }
+    setError('')
+    syncFromMs(validated, setTimestamp, setTimestampMs, setDatetime)
   }
 
   const fromDatetime = (dt: string) => {
+    if (!dt.trim()) {
+      setError('')
+      return
+    }
     const date = new Date(dt)
-    if (Number.isNaN(date.getTime())) return
+    if (Number.isNaN(date.getTime())) {
+      setError('请输入有效的 ISO 8601 日期时间，如 2024-01-01T00:00:00')
+      return
+    }
+    setError('')
     syncFromMs(date.getTime(), setTimestamp, setTimestampMs, setDatetime)
   }
 
   const useNow = () => {
+    setError('')
     syncFromMs(now, setTimestamp, setTimestampMs, setDatetime)
   }
 
-  const displayDate = timestampMs ? new Date(Number(timestampMs)) : null
+  const displayDate = timestampMs && !error ? new Date(Number(timestampMs)) : null
 
   return (
     <ToolPanel className="space-y-4">
       <div className="flex gap-2">
         <ExampleButton
           onClick={() => {
+            setError('')
             syncFromMs(1700000000000, setTimestamp, setTimestampMs, setDatetime)
           }}
         />
@@ -86,6 +114,8 @@ export default function TimestampConverter() {
         <CopyButton text={String(Math.floor(now / 1000))} label="复制当前秒级时间戳" />
         <CopyButton text={String(now)} label="复制当前毫秒级时间戳" />
       </div>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       <ToolSection label="Unix 时间戳（秒）">
         <Input

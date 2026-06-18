@@ -15,6 +15,10 @@ export default function Md5Hash() {
 
   const compute = () => {
     setError('')
+    if (!fileBuffer && !input.trim()) {
+      setError('请输入文本或上传文件')
+      return
+    }
     if (fileBuffer) {
       setOutput(SparkMD5.ArrayBuffer.hash(fileBuffer))
       return

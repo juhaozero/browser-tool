@@ -14,9 +14,6 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const [highlightId, setHighlightId] = useState<string | null>(null)
 
-  // 仅当从工具页返回时定位，避免侧边栏分类筛选时误滚动
-  const scrollTarget = (location.state as { scrollToTool?: string } | null)?.scrollToTool ?? null
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return tools.filter((tool) => {
@@ -34,31 +31,30 @@ export default function Home() {
     setHighlightId(null)
   }, [categoryFilter])
 
-  // 从工具页返回时滚动并高亮对应工具
+  // 从工具页返回时滚动并高亮对应工具（仅 location.state 触发，分类筛选不触发）
   useEffect(() => {
-    if (!scrollTarget) return
-    if (!filtered.some((t) => t.id === scrollTarget)) return
+    const scrollToTool = (location.state as { scrollToTool?: string } | null)?.scrollToTool
+    if (!scrollToTool) return
+    if (!filtered.some((t) => t.id === scrollToTool)) return
 
-    setHighlightId(scrollTarget)
+    setHighlightId(scrollToTool)
 
     const timer = window.setTimeout(() => {
-      document.getElementById(toolCardId(scrollTarget))?.scrollIntoView({
+      document.getElementById(toolCardId(scrollToTool))?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
       })
+      // 滚动后再清除 state，避免 effect 重跑取消 scrollIntoView 定时器
+      navigate(location.pathname + location.search, { replace: true, state: {} })
     }, 150)
 
     const clearHighlight = window.setTimeout(() => setHighlightId(null), 3000)
-
-    if (location.state?.scrollToTool) {
-      navigate(location.pathname + location.search, { replace: true, state: {} })
-    }
 
     return () => {
       clearTimeout(timer)
       clearTimeout(clearHighlight)
     }
-  }, [scrollTarget, filtered, location.pathname, location.search, location.state, navigate])
+  }, [location.state, filtered, location.pathname, location.search, navigate])
 
   const activeCategory = categories.find((c) => c.id === categoryFilter)
 
@@ -69,11 +65,10 @@ export default function Home() {
         <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] blur-2xl" />
         <div className="relative">
           <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            你的专属浏览器工具箱
+            浏览器工具箱
           </h1>
           <p className="mb-6 max-w-2xl text-[var(--text-muted)]">
             所有工具在浏览器本地运行，无需安装、无需注册、数据不上传。
-            专为开发者与日常效率场景设计。
           </p>
           <div className="relative max-w-lg">
             <Search
