@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "browser-tool",
-  "version": "0.0.4",
+  "version": "0.0.3",
   "identifier": "com.browser-tool.app",
   "build": {
     "frontendDist": "../dist",
