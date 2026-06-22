@@ -17,7 +17,7 @@ export default function ToolPage() {
   const ToolComponent = tool.component
 
   return (
-    <ToolLayout tool={tool}>
+    <ToolLayout tool={tool} immersive={tool.layout === 'immersive'}>
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">

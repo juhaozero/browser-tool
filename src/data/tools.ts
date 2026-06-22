@@ -272,6 +272,7 @@ export const tools: ToolDefinition[] = [
     category: 'format',
     tags: ['markdown', 'md', 'preview'],
     icon: FileCode,
+    layout: 'immersive',
     component: lazy(() => import('@/tools/MarkdownPreview')),
   },
   {

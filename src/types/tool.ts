@@ -24,6 +24,8 @@ export interface ToolDefinition {
   tags: string[] // 首页搜索匹配用
   icon: LucideIcon
   component: LazyExoticComponent<ComponentType<object>> // lazy 懒加载，减小首屏体积
+  /** immersive：全宽沉浸布局，适合编辑器类工具 */
+  layout?: 'default' | 'immersive'
 }
 
 export interface CategoryMeta {

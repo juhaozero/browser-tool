@@ -9,15 +9,41 @@ import { setLastToolId } from '@/lib/last-tool'
 interface ToolLayoutProps {
   tool: ToolDefinition
   children: ReactNode
+  immersive?: boolean
 }
 
 /** 工具页通用外壳：标题、返回链接、隐私提示条 */
-export function ToolLayout({ tool, children }: ToolLayoutProps) {
+export function ToolLayout({ tool, children, immersive = false }: ToolLayoutProps) {
   const Icon = tool.icon
 
   useEffect(() => {
     setLastToolId(tool.id)
   }, [tool.id])
+
+  if (immersive) {
+    return (
+      <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col">
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+          <Link
+            to="/"
+            state={{ scrollToTool: tool.id }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1.5 text-sm text-[var(--text-muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            <ArrowLeft size={15} />
+            返回
+          </Link>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Icon size={18} className="shrink-0 text-[var(--accent)]" />
+            <h1 className="truncate text-lg font-semibold text-[var(--text)]">{tool.name}</h1>
+            <span className="hidden rounded-md bg-[var(--bg-muted)] px-2 py-0.5 text-xs text-[var(--text-muted)] sm:inline">
+              {getCategoryLabel(tool.category)}
+            </span>
+          </div>
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
