@@ -32,6 +32,8 @@ import {
   FileImage,
   ScanLine,
   FolderGit2,
+  ListMinus,
+  Badge,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
@@ -156,6 +158,15 @@ export const tools: ToolDefinition[] = [
     component: lazy(() => import('@/tools/TextStatistics')),
   },
   {
+    id: 'text-dedupe',
+    name: '文本去重',
+    description: '按行去除重复文本，支持大小写与保留顺序选项',
+    category: 'text',
+    tags: ['text', 'dedupe', 'unique', 'duplicate'],
+    icon: ListMinus,
+    component: lazy(() => import('@/tools/TextDedupe')),
+  },
+  {
     id: 'jwt-decoder',
     name: 'JWT 解码器',
     description: '本地解析 JWT Header 与 Payload',
@@ -244,6 +255,15 @@ export const tools: ToolDefinition[] = [
     tags: ['gitignore', 'git', 'template'],
     icon: FolderGit2,
     component: lazy(() => import('@/tools/GitignoreGenerator')),
+  },
+  {
+    id: 'github-badge',
+    name: 'GitHub 徽章生成',
+    description: '生成 shields.io 风格 README 徽章 Markdown 与 HTML',
+    category: 'dev',
+    tags: ['github', 'badge', 'shields', 'readme', 'markdown'],
+    icon: Badge,
+    component: lazy(() => import('@/tools/GithubBadgeGenerator')),
   },
   {
     id: 'markdown-preview',
