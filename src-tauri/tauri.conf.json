@@ -38,6 +38,16 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    },
+    "windows": {
+      "nsis": {
+        "languages": [
+          "English",
+          "SimpChinese",
+          "TraditionalChinese"
+        ],
+        "displayLanguageSelector": true
+      }
     }
   }
 }

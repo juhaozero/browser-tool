@@ -18,39 +18,34 @@ pub fn run() {
     }) 
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|app| {  
+        .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
-                let show_item = MenuItemBuilder::with_id("show", "显示主窗口").build(app)?;
-                let quit_item = MenuItemBuilder::with_id("quit", "退出程序").build(app)?;
-                let menu = MenuBuilder::new(app)
+            }
+
+            let show_item = MenuItemBuilder::with_id("show", "显示主窗口").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "退出程序").build(app)?;
+            let menu = MenuBuilder::new(app)
                 .item(&show_item)
-                .separator() // 添加分割线
+                .separator()
                 .item(&quit_item)
                 .build()?;
 
             let _tray = TrayIconBuilder::new()
-                .tooltip("Browser Tool") // 鼠标悬停时的提示文字
+                .tooltip("Browser Tool")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                // 4. 处理菜单点击事件
                 .on_menu_event(|app, event| {
                     match event.id.as_ref() {
-                        "show" => {
-                            show_main_window(app);
-                        }
-                        "quit" => {
-                            // 彻底退出应用
-                            app.exit(0);
-                        }
+                        "show" => show_main_window(app),
+                        "quit" => app.exit(0),
                         _ => {}
                     }
                 })
-                // 5. 处理托盘图标本身的点击事件
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
                         button: MouseButton::Left,
@@ -58,13 +53,11 @@ pub fn run() {
                         ..
                     } = event
                     {
-                        // 左键单击托盘图标：显示/聚焦主窗口
-                        let app = tray.app_handle();
-                        show_main_window(app);
+                        show_main_window(tray.app_handle());
                     }
                 })
                 .build(app)?;
-            }
+
             Ok(())
         })
         .plugin(tauri_plugin_http::init())
