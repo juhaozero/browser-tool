@@ -36,7 +36,7 @@ export default function GitignoreGenerator() {
   useEffect(() => {
     fetchTemplateNames()
       .then(setAllNames)
-      .catch(() => setError('无法加载模板列表，请检查网络连接'))
+      .catch((error) => setError(`无法加载模板列表，请检查网络连接:${error}`))
       .finally(() => setListLoading(false))
   }, [])
 

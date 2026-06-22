@@ -1,3 +1,5 @@
+import { httpFetch } from '@/lib/http-client'
+
 export type GitignoreCategory = 'language' | 'framework' | 'editor' | 'os' | 'env'
 
 export interface GitignoreTemplateMeta {
@@ -72,13 +74,13 @@ export function getMetaMap(): Map<string, GitignoreTemplateMeta> {
 
 /** 从 GitHub 官方 API 拉取全部模板名称 */
 export async function fetchTemplateNames(): Promise<string[]> {
-  const res = await fetch('https://api.github.com/gitignore/templates')
+  const res = await httpFetch('https://api.github.com/gitignore/templates')
   if (!res.ok) throw new Error('获取模板列表失败')
   return res.json()
 }
 
 export async function fetchTemplateContent(name: string): Promise<string> {
-  const res = await fetch(`https://api.github.com/gitignore/templates/${encodeURIComponent(name)}`)
+  const res = await httpFetch(`https://api.github.com/gitignore/templates/${encodeURIComponent(name)}`)
   if (!res.ok) throw new Error(`获取模板 ${name} 失败`)
   const data = (await res.json()) as { source: string }
   return data.source

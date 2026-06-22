@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
-
+import { DNS_PROVIDERS, buildIpLookupUrl } from '@/data/ip'
+import { httpFetch } from '@/lib/http-client'
 const EXAMPLE_IP = '8.8.8.8'
 
 interface IpInfo {
@@ -65,7 +66,7 @@ function detectIpType(value: string): string | undefined {
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
+  const res = await httpFetch(url, init)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return (await res.json()) as T
 }
@@ -81,8 +82,8 @@ async function resolveViaDns(
   const dnsType = recordType === 'A' ? 1 : 28
   const url =
     provider === 'alidns'
-      ? `https://dns.alidns.com/resolve?name=${encoded}&type=${typeParam}`
-      : `https://cloudflare-dns.com/dns-query?name=${encoded}&type=${typeParam}`
+      ? DNS_PROVIDERS[0].url.replace('${encoded}', encoded).replace('${typeParam}', typeParam)
+      : DNS_PROVIDERS[1].url.replace('${encoded}', encoded).replace('${typeParam}', typeParam)
 
   const data = await fetchJson<{
     Answer?: Array<{ type: number; data: string }>
@@ -131,9 +132,6 @@ function formatCountry(name?: string, code?: string): string | undefined {
 }
 
 async function lookupViaIpSb(ip?: string): Promise<IpInfo> {
-  const url = ip
-    ? `https://api.ip.sb/geoip/${encodeURIComponent(ip)}`
-    : 'https://api.ip.sb/geoip'
   const data = await fetchJson<{
     ip?: string
     country?: string
@@ -145,7 +143,7 @@ async function lookupViaIpSb(ip?: string): Promise<IpInfo> {
     latitude?: number
     longitude?: number
     timezone?: string
-  }>(url)
+  }>(buildIpLookupUrl('ipSb', ip))
   if (!data.ip) throw new Error('未获取到 IP 信息')
   return {
     ip: data.ip,
@@ -162,9 +160,6 @@ async function lookupViaIpSb(ip?: string): Promise<IpInfo> {
 }
 
 async function lookupViaIpApiCo(ip?: string): Promise<IpInfo> {
-  const url = ip
-    ? `https://ipapi.co/${encodeURIComponent(ip)}/json/`
-    : 'https://ipapi.co/json/'
   const data = await fetchJson<{
     ip?: string
     error?: boolean
@@ -177,7 +172,7 @@ async function lookupViaIpApiCo(ip?: string): Promise<IpInfo> {
     latitude?: number
     longitude?: number
     timezone?: string
-  }>(url)
+  }>(buildIpLookupUrl('ipApiCo', ip))
   if (data.error) throw new Error(data.reason || '查询失败')
   if (!data.ip) throw new Error('未获取到 IP 信息')
   return {
@@ -195,9 +190,6 @@ async function lookupViaIpApiCo(ip?: string): Promise<IpInfo> {
 }
 
 async function lookupViaGeoJs(ip?: string): Promise<IpInfo> {
-  const url = ip
-    ? `https://get.geojs.io/v1/ip/geo/${encodeURIComponent(ip)}.json`
-    : 'https://get.geojs.io/v1/ip/geo.json'
   const data = await fetchJson<{
     ip?: string
     error?: string
@@ -209,7 +201,7 @@ async function lookupViaGeoJs(ip?: string): Promise<IpInfo> {
     latitude?: string
     longitude?: string
     timezone?: string
-  }>(url)
+  }>(buildIpLookupUrl('geoJs', ip))
   if (data.error) throw new Error(data.error)
   if (!data.ip) throw new Error('未获取到 IP 信息')
   return {

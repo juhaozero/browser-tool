@@ -47,13 +47,13 @@ export default function TextDedupe() {
           variant={keep === 'first' ? 'primary' : 'secondary'}
           onClick={() => setKeep('first')}
         >
-          保留首次
+          保留首次出现
         </Button>
         <Button
           variant={keep === 'last' ? 'primary' : 'secondary'}
           onClick={() => setKeep('last')}
         >
-          保留末次
+          保留末次出现
         </Button>
       </div>
 

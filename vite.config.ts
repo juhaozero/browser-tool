@@ -21,7 +21,8 @@ function spaRedirectsPlugin(basePath: string) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const base = normalizeBasePath(env.VITE_BASE_PATH || DEFAULT_BASE_PATH)
+  const isTauriEnv = !!(process.env.TAURI_ENV_PLATFORM || process.env.TAURI_PLATFORM)
+  const base = isTauriEnv ? './' : normalizeBasePath(env.VITE_BASE_PATH || DEFAULT_BASE_PATH)
 
   return {
     base,
@@ -31,9 +32,14 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    //  开发端口号
     server: {
       port: 5173,
-      strictPort: false,
+      strictPort: true,
+      // tauri dev 时 Cargo 会锁定 src-tauri/target 下的 .dll，Vite 监听会触发 EBUSY
+      watch: {
+        ignored: ['**/src-tauri/**'],
+      },
     },
     preview: {
       port: 4173,

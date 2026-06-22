@@ -1,0 +1,24 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "enables the default permissions",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://dns.alidns.com/**" },
+        { "url": "https://cloudflare-dns.com/**" },
+        { "url": "https://api.ip.sb/**" },
+        { "url": "https://ipapi.co/**" },
+        { "url": "https://get.geojs.io/**" },
+        { "url": "https://api.github.com/**" },
+        { "url": "https://img.shields.io/**" }
+      ]
+    },
+    "dialog:default",
+    "fs:default",
+    "fs:allow-write-file"
+  ]
+}
