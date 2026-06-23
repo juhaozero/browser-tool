@@ -7,50 +7,89 @@ on:
   workflow_dispatch:
 
 jobs:
-  create-changelog:
+  changelog:
+    name: Generate changelog
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
-      changelog: ${{ steps.build_changelog.outputs.changelog }} # 将生成的日志变成全局输出变量
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 必须获取全部历史来对比 Commit
+          fetch-depth: 0
 
-      - name: Build Changelog
-        id: build_changelog
+      - name: Build changelog
+        id: changelog
         uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          mode: COMMIT
+          toTag: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n---\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "categories": [
+                { "title": "## ✨ Features", "labels": ["feat"] },
+                { "title": "## 🐛 Bug Fixes", "labels": ["fix", "bug"] },
+                { "title": "## 🧰 Maintenance", "labels": ["chore", "refactor", "build", "ci"] },
+                { "title": "## 📝 Other", "labels": ["test", "style", "docs","perf"] }
+              ]
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish:
-    name: Build ${{ matrix.platform }}
-    needs: create-changelog # 关键：等待日志生成完才开工
-    runs-on: ${{ matrix.platform }}
+    name: Build ${{ matrix.platform }} ${{ matrix.args }}
+    needs: changelog
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+          - platform: ubuntu-22.04
+            args: ''
           - platform: windows-latest
             args: ''
-          # ...（如果你还需要 macos/ubuntu 可以在这里保留）
+
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'pnpm'
+
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: pnpm install
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libssl-dev libxdo-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build and upload release
@@ -60,8 +99,7 @@ jobs:
         with:
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v__VERSION__' }}
           releaseName: Browser Tool ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v__VERSION__' }}
-          releaseBody: ${{ needs.create-changelog.outputs.changelog }}
-          
-          releaseDraft: true
+          releaseBody: ${{ needs.changelog.outputs.changelog }}
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
