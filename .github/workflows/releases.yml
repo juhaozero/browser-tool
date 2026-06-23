@@ -28,12 +28,21 @@ jobs:
           toTag: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
           configurationJson: |
             {
-              "template": "#{{CHANGELOG}}\n\n---\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>未分类提交</summary>\n\n#{{UNCATEGORIZED}}\n</details>\n\n---\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "commit_template": "- #{{TITLE}}",
+              "empty_template": "本版本无变更。",
               "categories": [
-                { "title": "## ✨ Features", "labels": ["feat"] },
-                { "title": "## 🐛 Bug Fixes", "labels": ["fix", "bug"] },
-                { "title": "## 🧰 Maintenance", "labels": ["chore", "refactor", "build", "ci"] },
-                { "title": "## 📝 Other", "labels": ["test", "style", "docs","perf"] }
+                { "title": "## ✨ 新功能", "labels": ["feat", "feature"] },
+                { "title": "## 🐛 修复问题", "labels": ["fix"] },
+                { "title": "## 🧰 维护更新", "labels": ["chore", "refactor", "build", "ci"] },
+                { "title": "## 📝 其他", "labels": ["docs", "style", "test", "perf", "revert"] }
+              ],
+              "label_extractor": [
+                {
+                  "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\\([\\w\\-\\.]+\\))?(!)?:\\s*(.+)$",
+                  "on_property": "title",
+                  "target": "$1"
+                }
               ]
             }
         env:
