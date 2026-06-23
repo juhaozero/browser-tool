@@ -7,56 +7,50 @@ on:
   workflow_dispatch:
 
 jobs:
+  create-changelog:
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.build_changelog.outputs.changelog }} # 将生成的日志变成全局输出变量
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 必须获取全部历史来对比 Commit
+
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish:
-    name: Build ${{ matrix.platform }} ${{ matrix.args }}
+    name: Build ${{ matrix.platform }}
+    needs: create-changelog # 关键：等待日志生成完才开工
+    runs-on: ${{ matrix.platform }}
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-          - platform: ubuntu-22.04
-            args: ''
           - platform: windows-latest
             args: ''
-
-    runs-on: ${{ matrix.platform }}
-    timeout-minutes: 45
+          # ...（如果你还需要 macos/ubuntu 可以在这里保留）
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'pnpm'
-
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libssl-dev libxdo-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Install frontend dependencies
+      - name: pnpm install
         run: pnpm install --frozen-lockfile
 
       - name: Build and upload release
@@ -64,10 +58,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # 标签推送：Release 名 = git tag（v1.0.0）；手动触发：用 tauri.conf.json 版本
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v__VERSION__' }}
           releaseName: Browser Tool ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v__VERSION__' }}
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: ${{ needs.create-changelog.outputs.changelog }}
+          
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
