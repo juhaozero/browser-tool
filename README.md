@@ -11,7 +11,7 @@
 - **开箱即用工具**：JSON、Base64、UUID、时间戳、哈希、JWT 等
 - **深色/浅色主题**：跟随系统偏好，可手动切换
 - **响应式布局**：桌面侧边栏 + 移动端适配
-- **桌面客户端**：基于 Tauri 2 打包 Windows 安装包
+- **桌面客户端**：基于 Tauri 2 打包安装包
 
 ## 快速开始
 
@@ -56,7 +56,6 @@ pnpm run preview -- --port 8080
 pnpm run dev -- --host 0.0.0.0 --port 3000
 ```
 
-`--host 0.0.0.0` 允许局域网访问。
 
 ## Web 部署
 
@@ -88,7 +87,7 @@ pnpm run preview   # 本地验证 dist/ 是否正常
 | [Node.js](https://nodejs.org/) | 与 Web 开发相同 |
 | [pnpm](https://pnpm.io/) | 包管理 |
 | [Rust](https://www.rust-lang.org/tools/install) | Tauri 后端编译 |
-| [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | Windows 需勾选「使用 C++ 的桌面开发」 |
+| [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) ||
 | WebView2 | Windows 10/11 通常已内置 |
 
 安装 Rust 后执行 `rustup default stable`。
@@ -99,21 +98,6 @@ pnpm run preview   # 本地验证 dist/ 是否正常
 pnpm run tauri:dev
 ```
 
-- 会自动启动 Vite（`http://localhost:5173`）并打开桌面窗口
-- Vite 开发端口固定为 **5173**（`strictPort: true`），与 `tauri.conf.json` 中 `devUrl` 一致
-- 修改前端代码会热更新；修改 Rust 代码需重启
-
-### 打开开发者工具（DevTools）
-
-Tauri 桌面端**不是浏览器**，**F12 默认无效**。
-
-| 场景 | 打开方式 |
-|------|----------|
-| `pnpm run tauri:dev` 开发模式 | **Ctrl + Shift + I**，或右键页面 →「检查」 |
-| Release 安装包（`tauri:build`） | 默认**禁用** DevTools，F12 / 右键检查均无效 |
-| 需要调试 Release 包 | 使用 `pnpm run tauri:build:debug`，产物在 `src-tauri/target/debug/bundle/` |
-
-Windows 上打开的是 **Microsoft Edge DevTools**（WebView2 内核），界面与 Chrome 类似。
 
 ### 打包 Windows 安装包
 
@@ -134,8 +118,6 @@ pnpm run tauri:build
 | 静态资源路径 | 绝对或子路径 | 相对路径 `./assets/...` |
 | React Router | 可设 `basename` | `basename` 为空（根路由） |
 | 联网请求 | 浏览器 `fetch` | Tauri 环境走 `@tauri-apps/plugin-http` |
-
-**请勿**在 Tauri 打包前手动把 `.env` 里的 `VITE_BASE_PATH=/browser/` 当作桌面端配置——CLI 构建时会注入 `TAURI_ENV_PLATFORM`，Vite 会自动切换为相对路径。
 
 
 ## 技术栈

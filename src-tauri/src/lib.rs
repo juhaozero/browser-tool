@@ -7,6 +7,7 @@ use tauri::{
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .on_window_event(|window, event| {
         if let WindowEvent::CloseRequested { api, .. } = event {
             // 如果是主窗口，阻止默认关闭行为，并隐藏窗口
@@ -60,7 +61,6 @@ pub fn run() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_http::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
