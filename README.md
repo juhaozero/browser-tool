@@ -2,11 +2,11 @@
 
 ![GitHub License](https://img.shields.io/github/license/juhaozero/browser-tool)
 
-纯前端工具集。绝大多数工具在浏览器本地运行；少数工具（如 IP 查询、.gitignore 生成）需联网访问第三方接口。
+纯前端工具集。绝大多数工具在浏览器本地运行；少数工具（如 IP 查询）需联网访问第三方接口。
 
 ## 特性
 
-- **隐私优先**：计算、转换、哈希均在本地 Web Crypto / DOM API 中完成（IP 查询、模板拉取等少数工具除外）
+- **隐私优先**：计算、转换、哈希均在本地 Web Crypto / DOM API 中完成（IP 查询等少数工具除外）
 - **模块化架构**：每个工具独立组件，通过注册表统一管理，易于扩展
 - **开箱即用工具**：JSON、Base64、UUID、时间戳、哈希、JWT 等
 - **深色/浅色主题**：跟随系统偏好，可手动切换
@@ -17,10 +17,22 @@
 
 ```bash
 npm install -g pnpm
+git clone --recurse-submodules <repo-url>
+# 若已 clone 但未拉取 submodule：git submodule update --init --recursive
 pnpm install
 pnpm run dev      # 开发服务器，默认 http://localhost:5173
 pnpm run build    # Web 生产构建，输出到 dist/
 pnpm run preview  # 本地预览构建结果，默认 http://localhost:4173
+```
+
+### gitignore 模板（submodule）
+
+`.gitignore 生成器` 的模板来自 [github/gitignore](https://github.com/github/gitignore)，以 submodule 形式放在 `vendor/gitignore/`。构建时会自动扫描并生成 `src/data/gitignore/` 下的 JSON 索引。
+
+```bash
+# 更新官方模板到最新
+git submodule update --remote vendor/gitignore
+pnpm run sync:gitignore
 ```
 
 **自定义端口**

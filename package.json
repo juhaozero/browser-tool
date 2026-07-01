@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:web": "tsc -b && vite build",
+    "build": "pnpm run sync:gitignore && tsc -b && vite build",
+    "build:web": "pnpm run sync:gitignore && tsc -b && vite build",
+    "sync:gitignore": "node scripts/build-gitignore-index.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",

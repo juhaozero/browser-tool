@@ -250,7 +250,7 @@ export const tools: ToolDefinition[] = [
   {
     id: 'gitignore-generator',
     name: '.gitignore 生成器',
-    description: '按语言、框架、编辑器或环境搜索选择 gitignore 模板',
+    description: '按语言、框架、编辑器或环境搜索选择 gitignore 模板（离线）',
     category: 'dev',
     tags: ['gitignore', 'git', 'template'],
     icon: FolderGit2,

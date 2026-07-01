@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import {
   GITIGNORE_CATEGORIES,
-  fetchTemplateNames,
   getMetaMap,
+  getTemplateNames,
   mergeTemplates,
   type GitignoreCategory,
 } from '@/data/gitignore-meta'
@@ -22,26 +22,16 @@ interface TemplateItem {
 const EXAMPLE_SELECTED = ['Node', 'VisualStudioCode', 'macOS']
 
 export default function GitignoreGenerator() {
-  const [allNames, setAllNames] = useState<string[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<GitignoreCategory | 'all'>('all')
   const [output, setOutput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [listLoading, setListLoading] = useState(true)
   const [error, setError] = useState('')
 
   const metaMap = useMemo(() => getMetaMap(), [])
 
-  useEffect(() => {
-    fetchTemplateNames()
-      .then(setAllNames)
-      .catch((error) => setError(`无法加载模板列表，请检查网络连接:${error}`))
-      .finally(() => setListLoading(false))
-  }, [])
-
   const templates = useMemo((): TemplateItem[] => {
-    return allNames.map((name) => {
+    return getTemplateNames().map((name) => {
       const meta = metaMap.get(name)
       return {
         name,
@@ -50,7 +40,7 @@ export default function GitignoreGenerator() {
         tags: meta?.tags ?? [name.toLowerCase()],
       }
     })
-  }, [allNames, metaMap])
+  }, [metaMap])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -74,36 +64,28 @@ export default function GitignoreGenerator() {
     })
   }
 
-  const generate = async () => {
+  const generate = () => {
     if (selected.size === 0) {
       setError('请至少选择一个模板')
       return
     }
-    setLoading(true)
     setError('')
     try {
-      const content = await mergeTemplates([...selected])
-      setOutput(content)
+      setOutput(mergeTemplates([...selected]))
     } catch (e) {
       setError(e instanceof Error ? e.message : '生成失败')
-    } finally {
-      setLoading(false)
     }
   }
 
-  const loadExample = async () => {
+  const loadExample = () => {
     setSelected(new Set(EXAMPLE_SELECTED))
     setQuery('')
     setCategory('all')
-    setLoading(true)
     setError('')
     try {
-      const content = await mergeTemplates(EXAMPLE_SELECTED)
-      setOutput(content)
+      setOutput(mergeTemplates(EXAMPLE_SELECTED))
     } catch (e) {
       setError(e instanceof Error ? e.message : '生成失败')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -115,8 +97,8 @@ export default function GitignoreGenerator() {
 
       <div className="flex flex-wrap gap-2">
         <ExampleButton onClick={loadExample} label="示例：Node + VS Code + macOS" />
-        <Button variant="primary" onClick={generate} disabled={loading || selected.size === 0}>
-          {loading ? '生成中...' : `生成 .gitignore (${selected.size})`}
+        <Button variant="primary" onClick={generate} disabled={selected.size === 0}>
+          {`生成 .gitignore (${selected.size})`}
         </Button>
       </div>
 
@@ -148,32 +130,28 @@ export default function GitignoreGenerator() {
         ))}
       </div>
 
-      {listLoading ? (
-        <p className="text-sm text-[var(--text-muted)]">加载模板列表...</p>
-      ) : (
-        <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-2">
-          {filtered.length === 0 ? (
-            <p className="p-4 text-center text-sm text-[var(--text-muted)]">无匹配模板</p>
-          ) : (
-            <div className="grid gap-1 sm:grid-cols-2">
-              {filtered.map((t) => (
-                <label
-                  key={t.name}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-[var(--bg-elevated)] ${selected.has(t.name) ? 'bg-[color-mix(in_srgb,var(--accent)_12%,transparent)]' : ''}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(t.name)}
-                    onChange={() => toggle(t.name)}
-                  />
-                  <span className="font-medium">{t.label}</span>
-                  <span className="text-xs text-[var(--text-muted)]">{t.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-2">
+        {filtered.length === 0 ? (
+          <p className="p-4 text-center text-sm text-[var(--text-muted)]">无匹配模板</p>
+        ) : (
+          <div className="grid gap-1 sm:grid-cols-2">
+            {filtered.map((t) => (
+              <label
+                key={t.name}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-[var(--bg-elevated)] ${selected.has(t.name) ? 'bg-[color-mix(in_srgb,var(--accent)_12%,transparent)]' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(t.name)}
+                  onChange={() => toggle(t.name)}
+                />
+                <span className="font-medium">{t.label}</span>
+                <span className="text-xs text-[var(--text-muted)]">{t.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
 
       {error && <Alert type="error">{error}</Alert>}
 
@@ -193,7 +171,10 @@ export default function GitignoreGenerator() {
         </ToolSection>
       )}
 
-      <Alert type="info">模板内容来自 GitHub 官方 gitignore 仓库，生成时需联网获取。</Alert>
+      <Alert type="info">
+        模板内容来自 GitHub 官方 gitignore 仓库，本地离线可用，共{' '}
+        {templates.length} 个模板。
+      </Alert>
     </ToolPanel>
   )
 }

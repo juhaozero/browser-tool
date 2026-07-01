@@ -1,4 +1,5 @@
-import { httpFetch } from '@/lib/http-client'
+import templateNames from './gitignore/names.json'
+import templates from './gitignore/templates.json'
 
 export type GitignoreCategory = 'language' | 'framework' | 'editor' | 'os' | 'env'
 
@@ -68,29 +69,28 @@ export const GITIGNORE_META: GitignoreTemplateMeta[] = [
   { name: 'GitBook', label: 'GitBook', category: 'env', tags: ['gitbook', 'docs'] },
 ]
 
+const TEMPLATE_MAP = templates as Record<string, string>
+
 export function getMetaMap(): Map<string, GitignoreTemplateMeta> {
   return new Map(GITIGNORE_META.map((m) => [m.name, m]))
 }
 
-/** 从 GitHub 官方 API 拉取全部模板名称 */
-export async function fetchTemplateNames(): Promise<string[]> {
-  const res = await httpFetch('https://api.github.com/gitignore/templates')
-  if (!res.ok) throw new Error('获取模板列表失败')
-  return res.json()
+/** 本地 gitignore 模板名称列表（来自 vendor/gitignore submodule） */
+export function getTemplateNames(): string[] {
+  return templateNames as string[]
 }
 
-export async function fetchTemplateContent(name: string): Promise<string> {
-  const res = await httpFetch(`https://api.github.com/gitignore/templates/${encodeURIComponent(name)}`)
-  if (!res.ok) throw new Error(`获取模板 ${name} 失败`)
-  const data = (await res.json()) as { source: string }
-  return data.source
+export function getTemplateContent(name: string): string {
+  const content = TEMPLATE_MAP[name]
+  if (!content) throw new Error(`模板 ${name} 不存在`)
+  return content
 }
 
 /** 合并多个模板，每段以注释头分隔 */
-export async function mergeTemplates(names: string[]): Promise<string> {
+export function mergeTemplates(names: string[]): string {
   const parts: string[] = []
   for (const name of names) {
-    const content = await fetchTemplateContent(name)
+    const content = getTemplateContent(name)
     parts.push(`# --- ${name} ---\n${content.trim()}`)
   }
   return parts.join('\n\n') + '\n'
