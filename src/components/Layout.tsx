@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useSearchParams } from 'react-router-dom'
-import { Moon, Sun, Menu, X, LayoutGrid } from 'lucide-react'
+import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTheme } from '@/lib/utils'
 import { categories, tools } from '@/data/tools'
@@ -75,19 +75,29 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-[color-mix(in_srgb,var(--bg)_75%,transparent)] backdrop-blur-xl">
-        <div className="mx- auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="group flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[color-mix(in_srgb,var(--accent)_60%,#6366f1)] text-white shadow-[0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition group-hover:scale-105">
-              <LayoutGrid size={18} strokeWidth={2.25} />
+        <div className="mx-auto flex h-[4.25rem] w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+          <Link to="/" className="group flex min-w-0 items-center gap-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-[0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] ring-1 ring-[color-mix(in_srgb,var(--accent)_30%,transparent)] transition group-hover:scale-105">
+              <img
+                src={`${import.meta.env.BASE_URL}logo.svg`}
+                alt=""
+                width={36}
+                height={36}
+                className="h-full w-full"
+              />
             </div>
-            <div className="leading-tight">
-              <span className="block font-semibold tracking-tight text-[var(--text)]">Browser Tool</span>
-              <span className="hidden text-xs text-[var(--text-muted)] sm:block">本地运行的开发者工具箱</span>
+            <div className="min-w-0 space-y-0.5">
+              <span className="block text-[15px] font-semibold leading-none tracking-tight text-[var(--text)]">
+                Browser Tool
+              </span>
+              <span className="hidden text-xs leading-snug text-[var(--text-muted)] sm:block">
+                本地运行的开发者工具箱
+              </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-1.5">
-            <span className="mr-2 hidden rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1 text-xs text-[var(--text-muted)] md:inline">
+          <div className="ml-auto flex shrink-0 items-center gap-2.5">
+            <span className="hidden rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5 text-xs text-[var(--text-muted)] md:inline">
               {tools.length} 个工具
             </span>
             <button
