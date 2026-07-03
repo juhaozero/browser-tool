@@ -45,7 +45,7 @@ export const categories: CategoryMeta[] = [
   { id: 'text', label: '文本处理', description: '大小写转换、文本统计、对比等' },
   { id: 'datetime', label: '日期时间', description: '时间戳、Cron 等时间工具' },
   { id: 'dev', label: '开发调试', description: '正则、颜色、cURL 等开发者常用工具' },
-  { id: 'image', label: '图片处理', description: '缩放、格式转换等图片工具' },
+  { id: 'image', label: '图片处理', description: '缩放、压缩、格式转换等图片工具' },
 ]
 
 export const tools: ToolDefinition[] = [
@@ -292,6 +292,15 @@ export const tools: ToolDefinition[] = [
     tags: ['image', 'resize'],
     icon: Image,
     component: lazy(() => import('@/tools/ImageResizer')),
+  },
+  {
+    id: 'image-compressor',
+    name: '图片压缩',
+    description: '减小图片体积，支持质量与尺寸调节',
+    category: 'image',
+    tags: ['image', 'compress', 'optimize'],
+    icon: FileImage,
+    component: lazy(() => import('@/tools/ImageCompressor')),
   },
   {
     id: 'image-to-png',

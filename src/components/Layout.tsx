@@ -75,7 +75,7 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-[color-mix(in_srgb,var(--bg)_75%,transparent)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx- auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="group flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[color-mix(in_srgb,var(--accent)_60%,#6366f1)] text-white shadow-[0_4px_14px_color-mix(in_srgb,var(--accent)_35%,transparent)] transition group-hover:scale-105">
               <LayoutGrid size={18} strokeWidth={2.25} />
