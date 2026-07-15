@@ -257,7 +257,7 @@ export default function ImageCompressor() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--text-muted)]">缩放比例</span>
+            <span className="text-[var(--text-muted)]">压缩比例</span>
             <span className="font-mono">{scalePercent}%</span>
           </div>
           <input
@@ -279,7 +279,7 @@ export default function ImageCompressor() {
         </ToolSection>
 
         <div className="space-y-1 sm:col-span-2">
-          <label className="text-sm text-[var(--text-muted)]">缩放质量</label>
+          <label className="text-sm text-[var(--text-muted)]">压缩质量</label>
           <Select value={speed} onChange={setSpeed} options={SPEED_OPTIONS} />
         </div>
       </div>

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://app.juhaozero.com/browser/sitemap-index.xml
+Sitemap: https://app.juhaozero.com/browser/baidusitemap.xml
