@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { getToolById } from '@/data/tools'
+import { toolRedirects } from '@/data/tool-redirects'
 import { ToolLayout } from '@/components/ToolLayout'
 
 /**
@@ -10,6 +11,11 @@ import { ToolLayout } from '@/components/ToolLayout'
  */
 export default function ToolPage() {
   const { toolId } = useParams<{ toolId: string }>()
+
+  if (toolId && toolRedirects[toolId]) {
+    return <Navigate to={`/tool/${toolRedirects[toolId]}`} replace />
+  }
+
   const tool = toolId ? getToolById(toolId) : undefined
 
   if (!tool) return <Navigate to="/" replace />

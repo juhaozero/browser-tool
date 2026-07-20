@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection } from '@/components/ui'
 import { downloadBlob } from '@/lib/download'
 import { convertImageFormat, computeOutputDimensions, validateImageDimensions } from '@/lib/image-utils'
@@ -8,14 +9,6 @@ import {
   parseOptionalIntInRange,
 } from '@/lib/input-validation'
 
-interface ImageConverterProps {
-  mime: string
-  ext: string
-  label: string
-  defaultQuality?: number
-  supportsQuality?: boolean
-}
-
 /** 缩放插值档位，映射到 Canvas imageSmoothingQuality */
 const SPEED_OPTIONS = [
   { value: 'low', label: '快速（低质量插值）' },
@@ -23,28 +16,96 @@ const SPEED_OPTIONS = [
   { value: 'high', label: '高质量（较慢）' },
 ]
 
+type FormatId = 'png' | 'jpg' | 'webp' | 'avif' | 'ico'
+
+interface FormatPreset {
+  id: FormatId
+  label: string
+  mime: string
+  ext: string
+  supportsQuality: boolean
+  defaultQuality: number
+}
+
+const FORMAT_PRESETS: FormatPreset[] = [
+  { id: 'png', label: 'PNG', mime: 'image/png', ext: 'png', supportsQuality: false, defaultQuality: 92 },
+  { id: 'jpg', label: 'JPG', mime: 'image/jpeg', ext: 'jpg', supportsQuality: true, defaultQuality: 90 },
+  { id: 'webp', label: 'WebP', mime: 'image/webp', ext: 'webp', supportsQuality: true, defaultQuality: 85 },
+  { id: 'avif', label: 'AVIF', mime: 'image/avif', ext: 'avif', supportsQuality: true, defaultQuality: 80 },
+  { id: 'ico', label: 'Favicon (PNG)', mime: 'image/png', ext: 'png', supportsQuality: false, defaultQuality: 92 },
+]
+
+const FORMAT_OPTIONS = FORMAT_PRESETS.map((f) => ({
+  value: f.id,
+  label: f.id === 'ico' ? 'Favicon' : f.label,
+}))
+
+function parseFormat(raw: string | null): FormatId {
+  if (!raw) return 'png'
+  const normalized = raw.trim().toLowerCase()
+  const map: Record<string, FormatId> = {
+    png: 'png',
+    jpg: 'jpg',
+    jpeg: 'jpg',
+    webp: 'webp',
+    avif: 'avif',
+    ico: 'ico',
+    favicon: 'ico',
+  }
+  return map[normalized] ?? 'png'
+}
+
 /**
- * 通用图片格式转换组件
- * 各 ImageToXxx 入口通过不同 mime/ext 参数复用此组件
+ * 统一图片格式转换：PNG / JPG / WebP / AVIF / Favicon
+ * 支持 ?format=webp 等深链预选
  */
-export default function ImageConverter({
-  mime,
-  ext,
-  label,
-  defaultQuality = 92,
-  supportsQuality = true,
-}: ImageConverterProps) {
+export default function ImageFormatConverter() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const formatId = parseFormat(searchParams.get('format'))
+  const preset = FORMAT_PRESETS.find((f) => f.id === formatId) ?? FORMAT_PRESETS[0]
+
+  const handleFormatChange = (v: string) => {
+    const next = v as FormatId
+    setSearchParams(
+      (prev) => {
+        const nextParams = new URLSearchParams(prev)
+        nextParams.set('format', next)
+        return nextParams
+      },
+      { replace: true },
+    )
+  }
+
+  return (
+    <ToolPanel className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-[10rem] space-y-1">
+          <label className="text-sm text-[var(--text-muted)]">目标格式</label>
+          <Select value={formatId} onChange={handleFormatChange} options={FORMAT_OPTIONS} />
+        </div>
+        <p className="pb-2 text-sm text-[var(--text-muted)]">
+          {formatId === 'ico'
+            ? '生成 PNG 格式 favicon（浏览器原生 ICO 编码较复杂，此处输出 PNG）。'
+            : `将图片转换为 ${preset.label}，支持质量、缩放与编码速度调节，全部在本地处理。`}
+        </p>
+      </div>
+
+      {formatId === 'ico' ? <FaviconConverter /> : <RasterConverter key={formatId} preset={preset} />}
+    </ToolPanel>
+  )
+}
+
+function RasterConverter({ preset }: { preset: FormatPreset }) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
   const [originalSize, setOriginalSize] = useState({ w: 0, h: 0 })
   const [scalePercent, setScalePercent] = useState('100')
   const [maxWidth, setMaxWidth] = useState('')
   const [maxHeight, setMaxHeight] = useState('')
-  const [quality, setQuality] = useState(String(defaultQuality))
+  const [quality, setQuality] = useState(String(preset.defaultQuality))
   const [speed, setSpeed] = useState('medium')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
   const previewUrlRef = useRef('')
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,13 +126,13 @@ export default function ImageConverter({
       try {
         validateImageDimensions(img.width, img.height)
         setOriginalSize({ w: img.width, h: img.height })
-      } catch (e) {
+      } catch (err) {
         if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
         previewUrlRef.current = ''
         setPreview('')
         setFile(null)
         setOriginalSize({ w: 0, h: 0 })
-        setError(e instanceof Error ? e.message : '图片尺寸无效')
+        setError(err instanceof Error ? err.message : '图片尺寸无效')
       }
     }
     img.onerror = () => setError('图片加载失败')
@@ -114,7 +175,7 @@ export default function ImageConverter({
       return
     }
     let qualityValue: number | undefined
-    if (supportsQuality) {
+    if (preset.supportsQuality) {
       const qualityParsed = parseIntInRange(quality, 10, 100, '输出质量')
       if (!qualityParsed.ok) {
         setError(qualityParsed.error)
@@ -125,16 +186,16 @@ export default function ImageConverter({
     setLoading(true)
     setError('')
     try {
-      const blob = await convertImageFormat(file, mime, {
+      const blob = await convertImageFormat(file, preset.mime, {
         quality: qualityValue,
         scalePercent: scaleParsed.value,
         maxWidth: maxWidthParsed.value,
         maxHeight: maxHeightParsed.value,
         smoothingQuality: speed as ImageSmoothingQuality,
       })
-      downloadBlob(blob, `${file.name.replace(/\.[^.]+$/, '')}.${ext}`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '转换失败，当前浏览器可能不支持该格式')
+      downloadBlob(blob, `${file.name.replace(/\.[^.]+$/, '')}.${preset.ext}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '转换失败，当前浏览器可能不支持该格式')
     } finally {
       setLoading(false)
     }
@@ -143,11 +204,7 @@ export default function ImageConverter({
   const size = outputSize()
 
   return (
-    <ToolPanel className="space-y-4">
-      <p className="text-sm text-[var(--text-muted)]">
-        将图片转换为 {label} 格式，支持质量、缩放比例与编码速度调节，全部在本地处理。
-      </p>
-
+    <div className="space-y-4">
       <label className="cursor-pointer">
         <span className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-2 text-sm hover:border-[var(--accent)]">
           选择图片
@@ -183,7 +240,7 @@ export default function ImageConverter({
           />
         </div>
 
-        {supportsQuality && (
+        {preset.supportsQuality && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-[var(--text-muted)]">输出质量</span>
@@ -218,32 +275,15 @@ export default function ImageConverter({
       </div>
 
       <Button variant="primary" onClick={convert} disabled={!file || loading}>
-        {loading ? '转换中...' : `转换为 ${label}`}
+        {loading ? '转换中...' : `转换为 ${preset.label}`}
       </Button>
 
       {error && <Alert type="error">{error}</Alert>}
-    </ToolPanel>
+    </div>
   )
 }
 
-// 以下导出供独立路由懒加载，每个文件仅 re-export default
-export function ImageToPng() {
-  return <ImageConverter mime="image/png" ext="png" label="PNG" supportsQuality={false} />
-}
-
-export function ImageToJpg() {
-  return <ImageConverter mime="image/jpeg" ext="jpg" label="JPG" defaultQuality={90} />
-}
-
-export function ImageToWebp() {
-  return <ImageConverter mime="image/webp" ext="webp" label="WebP" defaultQuality={85} />
-}
-
-export function ImageToAvif() {
-  return <ImageConverter mime="image/avif" ext="avif" label="AVIF" defaultQuality={80} />
-}
-
-export function ImageToIco() {
+function FaviconConverter() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
   const [iconSize, setIconSize] = useState('32')
@@ -282,16 +322,15 @@ export function ImageToIco() {
       const size = parseInt(iconSize, 10) || 32
       const blob = await imageToIco(file, size, speed as ImageSmoothingQuality)
       downloadBlob(blob, `favicon-${size}.png`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '图标生成失败')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '图标生成失败')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <ToolPanel className="space-y-4">
-      <p className="text-sm text-[var(--text-muted)]">生成 PNG 格式 favicon（浏览器原生 ICO 编码较复杂，此处输出 PNG）。</p>
+    <div className="space-y-4">
       <label className="cursor-pointer">
         <span className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-2 text-sm hover:border-[var(--accent)]">
           选择图片
@@ -324,6 +363,6 @@ export function ImageToIco() {
         {loading ? '生成中...' : '生成图标'}
       </Button>
       {error && <Alert type="error">{error}</Alert>}
-    </ToolPanel>
+    </div>
   )
 }
