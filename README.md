@@ -73,6 +73,8 @@ pnpm run dev -- --host 0.0.0.0 --port 3000
 
 本项目是纯静态站点。执行 `pnpm run build` 后，`dist/` 目录即为可部署的完整产物。
 
+构建末尾会预渲染各工具页 HTML（`dist/tool/{id}/index.html`），写入独立的 `<title>` / `<meta description>`，便于搜索引擎收录。部署时请上传**整个** `dist/`，不要只传首页。
+
 ### 子路径部署
 
 默认部署在域名根路径（`/`）。若需挂到子路径（如 `https://example.com/app/`），修改 `.env`：

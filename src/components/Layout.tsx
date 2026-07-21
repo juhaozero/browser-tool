@@ -5,6 +5,7 @@ import { useTheme } from '@/lib/utils'
 import { categories, tools } from '@/data/tools'
 import { CommandPalette } from '@/components/CommandPalette'
 import { useCommandPaletteHotkey } from '@/hooks/useCommandPaletteHotkey'
+import { useDocumentMeta } from '@/hooks/useDocumentMeta'
 
 const categoryCounts = Object.fromEntries(
   categories.map((cat) => [cat.id, tools.filter((t) => t.category === cat.id).length]),
@@ -66,6 +67,7 @@ export function Layout() {
     setPaletteOpen(true)
   }, [])
   useCommandPaletteHotkey(openPalette)
+  useDocumentMeta()
 
   const categoryNav = (
     <nav className="space-y-0.5">

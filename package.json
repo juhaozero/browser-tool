@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "pnpm run sync:gitignore && pnpm run sync:sitemap && tsc -b && vite build",
-    "build:web": "pnpm run sync:gitignore && pnpm run sync:sitemap && tsc -b && vite build",
+    "build": "pnpm run sync:gitignore && pnpm run sync:sitemap && tsc -b && vite build && pnpm run prerender:tools",
+    "build:web": "pnpm run sync:gitignore && pnpm run sync:sitemap && tsc -b && vite build && pnpm run prerender:tools",
     "sync:gitignore": "node scripts/build-gitignore-index.mjs",
     "sync:sitemap": "node scripts/build-sitemap.mjs",
+    "prerender:tools": "node scripts/prerender-tools.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",
