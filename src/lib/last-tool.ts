@@ -1,11 +1,25 @@
 /** 记录用户最近访问的工具，用于首页返回定位 */
 
 import { canonicalToolId } from '@/data/tool-redirects'
+import { pushRecentTool } from '@/lib/recent-tools'
 
 const STORAGE_KEY = 'browser-tool-last-tool'
 
+function scheduleWrite(fn: () => void) {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(fn)
+    return
+  }
+  setTimeout(fn, 0)
+}
+
 export function setLastToolId(id: string) {
-  sessionStorage.setItem(STORAGE_KEY, canonicalToolId(id))
+  const canonical = canonicalToolId(id)
+  // 延迟写 storage，避免点击导航时同步阻塞主线程
+  scheduleWrite(() => {
+    sessionStorage.setItem(STORAGE_KEY, canonical)
+    pushRecentTool(canonical)
+  })
 }
 
 export function getLastToolId(): string | null {

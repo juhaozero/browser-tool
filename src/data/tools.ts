@@ -6,7 +6,7 @@
  * 2. 在下方 tools 数组追加一条记录（component 使用 lazy）
  * 3. 路由 /tool/:toolId 会自动生效，无需改 App.tsx
  */
-import { lazy } from 'react'
+import { lazyTool } from '@/lib/lazy-tool'
 import {
   Braces,
   Binary,
@@ -42,6 +42,7 @@ import {
   ScanQrCode,
   FileKey,
   Languages,
+  Wallet,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
@@ -54,6 +55,7 @@ export const categories: CategoryMeta[] = [
   { id: 'datetime', label: '日期时间', description: '时间戳、Cron 等时间工具' },
   { id: 'dev', label: '开发调试', description: '正则、颜色、cURL、URL 解析、证书等开发者常用工具' },
   { id: 'image', label: '图片处理', description: '缩放、压缩、格式转换、二维码识别等图片工具' },
+  { id: 'game', label: '游戏工具', description: 'Steam 倒余额、市场手续费等游戏向实用计算' },
 ]
 
 export const tools: ToolDefinition[] = [
@@ -64,7 +66,7 @@ export const tools: ToolDefinition[] = [
     category: 'format',
     tags: ['json', 'format', 'validate'],
     icon: Braces,
-    component: lazy(() => import('@/tools/JsonFormatter')),
+    component: lazyTool(() => import('@/tools/JsonFormatter')),
   },
   {
     id: 'sql-formatter',
@@ -73,7 +75,7 @@ export const tools: ToolDefinition[] = [
     category: 'format',
     tags: ['sql', 'format', 'minify'],
     icon: Database,
-    component: lazy(() => import('@/tools/SqlFormatter')),
+    component: lazyTool(() => import('@/tools/SqlFormatter')),
   },
   {
     id: 'code-formatter',
@@ -82,7 +84,7 @@ export const tools: ToolDefinition[] = [
     category: 'format',
     tags: ['css', 'javascript', 'minify', 'beautify'],
     icon: WandSparkles,
-    component: lazy(() => import('@/tools/CodeFormatter')),
+    component: lazyTool(() => import('@/tools/CodeFormatter')),
   },
   {
     id: 'base64',
@@ -91,7 +93,7 @@ export const tools: ToolDefinition[] = [
     category: 'encode',
     tags: ['base64', 'encode', 'decode'],
     icon: Binary,
-    component: lazy(() => import('@/tools/Base64Tool')),
+    component: lazyTool(() => import('@/tools/Base64Tool')),
   },
   {
     id: 'uuid-generator',
@@ -100,7 +102,7 @@ export const tools: ToolDefinition[] = [
     category: 'generate',
     tags: ['uuid', 'guid', 'random'],
     icon: Fingerprint,
-    component: lazy(() => import('@/tools/UuidGenerator')),
+    component: lazyTool(() => import('@/tools/UuidGenerator')),
   },
   {
     id: 'id-generator',
@@ -109,7 +111,7 @@ export const tools: ToolDefinition[] = [
     category: 'generate',
     tags: ['nanoid', 'ulid', 'hashids', 'id'],
     icon: Sparkles,
-    component: lazy(() => import('@/tools/IdGenerator')),
+    component: lazyTool(() => import('@/tools/IdGenerator')),
   },
   {
     id: 'lorem-generator',
@@ -118,7 +120,7 @@ export const tools: ToolDefinition[] = [
     category: 'generate',
     tags: ['lorem', 'fake', 'mock'],
     icon: FileText,
-    component: lazy(() => import('@/tools/LoremGenerator')),
+    component: lazyTool(() => import('@/tools/LoremGenerator')),
   },
   {
     id: 'timestamp',
@@ -127,7 +129,7 @@ export const tools: ToolDefinition[] = [
     category: 'datetime',
     tags: ['timestamp', 'unix', 'date'],
     icon: Clock,
-    component: lazy(() => import('@/tools/TimestampConverter')),
+    component: lazyTool(() => import('@/tools/TimestampConverter')),
   },
   {
     id: 'case-converter',
@@ -136,7 +138,7 @@ export const tools: ToolDefinition[] = [
     category: 'text',
     tags: ['case', 'camel', 'snake'],
     icon: Type,
-    component: lazy(() => import('@/tools/CaseConverter')),
+    component: lazyTool(() => import('@/tools/CaseConverter')),
   },
   {
     id: 'url-encoder',
@@ -145,7 +147,7 @@ export const tools: ToolDefinition[] = [
     category: 'encode',
     tags: ['url', 'encode', 'decode'],
     icon: Link,
-    component: lazy(() => import('@/tools/UrlEncoder')),
+    component: lazyTool(() => import('@/tools/UrlEncoder')),
   },
   {
     id: 'url-parser',
@@ -154,7 +156,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['url', 'query', 'parse'],
     icon: Unlink,
-    component: lazy(() => import('@/tools/UrlParser')),
+    component: lazyTool(() => import('@/tools/UrlParser')),
   },
   {
     id: 'unicode-escape',
@@ -163,7 +165,7 @@ export const tools: ToolDefinition[] = [
     category: 'encode',
     tags: ['unicode', 'escape', 'utf8'],
     icon: Languages,
-    component: lazy(() => import('@/tools/UnicodeEscape')),
+    component: lazyTool(() => import('@/tools/UnicodeEscape')),
   },
   {
     id: 'hash',
@@ -172,7 +174,7 @@ export const tools: ToolDefinition[] = [
     category: 'crypto',
     tags: ['hash', 'md5', 'sha256', 'sha1', 'sha512'],
     icon: Hash,
-    component: lazy(() => import('@/tools/HashTool')),
+    component: lazyTool(() => import('@/tools/HashTool')),
   },
   {
     id: 'password-generator',
@@ -181,7 +183,7 @@ export const tools: ToolDefinition[] = [
     category: 'generate',
     tags: ['password', 'random', 'security'],
     icon: KeyRound,
-    component: lazy(() => import('@/tools/PasswordGenerator')),
+    component: lazyTool(() => import('@/tools/PasswordGenerator')),
   },
   {
     id: 'color-converter',
@@ -190,7 +192,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['color', 'hex', 'rgb'],
     icon: Palette,
-    component: lazy(() => import('@/tools/ColorConverter')),
+    component: lazyTool(() => import('@/tools/ColorConverter')),
   },
   {
     id: 'text-diff',
@@ -199,7 +201,7 @@ export const tools: ToolDefinition[] = [
     category: 'text',
     tags: ['diff', 'compare'],
     icon: GitCompare,
-    component: lazy(() => import('@/tools/TextDiff')),
+    component: lazyTool(() => import('@/tools/TextDiff')),
   },
   {
     id: 'text-statistics',
@@ -208,7 +210,7 @@ export const tools: ToolDefinition[] = [
     category: 'text',
     tags: ['text', 'statistics', 'count'],
     icon: FileText,
-    component: lazy(() => import('@/tools/TextStatistics')),
+    component: lazyTool(() => import('@/tools/TextStatistics')),
   },
   {
     id: 'text-dedupe',
@@ -217,7 +219,7 @@ export const tools: ToolDefinition[] = [
     category: 'text',
     tags: ['text', 'dedupe', 'unique', 'duplicate'],
     icon: ListMinus,
-    component: lazy(() => import('@/tools/TextDedupe')),
+    component: lazyTool(() => import('@/tools/TextDedupe')),
   },
   {
     id: 'jwt-decoder',
@@ -226,7 +228,7 @@ export const tools: ToolDefinition[] = [
     category: 'crypto',
     tags: ['jwt', 'decode'],
     icon: Shield,
-    component: lazy(() => import('@/tools/JwtDecoder')),
+    component: lazyTool(() => import('@/tools/JwtDecoder')),
   },
   {
     id: 'jwt-generator',
@@ -235,7 +237,7 @@ export const tools: ToolDefinition[] = [
     category: 'crypto',
     tags: ['jwt', 'sign', 'token'],
     icon: Shield,
-    component: lazy(() => import('@/tools/JwtGenerator')),
+    component: lazyTool(() => import('@/tools/JwtGenerator')),
   },
   {
     id: 'jwt-verifier',
@@ -244,7 +246,7 @@ export const tools: ToolDefinition[] = [
     category: 'crypto',
     tags: ['jwt', 'verify', 'hmac'],
     icon: ShieldCheck,
-    component: lazy(() => import('@/tools/JwtVerifier')),
+    component: lazyTool(() => import('@/tools/JwtVerifier')),
   },
   {
     id: 'aes-crypto',
@@ -253,7 +255,7 @@ export const tools: ToolDefinition[] = [
     category: 'crypto',
     tags: ['aes', 'encrypt', 'decrypt'],
     icon: Lock,
-    component: lazy(() => import('@/tools/AesCrypto')),
+    component: lazyTool(() => import('@/tools/AesCrypto')),
   },
   {
     id: 'pem-viewer',
@@ -262,7 +264,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['pem', 'certificate', 'x509', 'ssl'],
     icon: FileKey,
-    component: lazy(() => import('@/tools/PemViewer')),
+    component: lazyTool(() => import('@/tools/PemViewer')),
   },
   {
     id: 'regex-tester',
@@ -271,7 +273,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['regex', 'pattern'],
     icon: Regex,
-    component: lazy(() => import('@/tools/RegexTester')),
+    component: lazyTool(() => import('@/tools/RegexTester')),
   },
   {
     id: 'html-entity',
@@ -280,7 +282,7 @@ export const tools: ToolDefinition[] = [
     category: 'encode',
     tags: ['html', 'entity'],
     icon: Code2,
-    component: lazy(() => import('@/tools/HtmlEntity')),
+    component: lazyTool(() => import('@/tools/HtmlEntity')),
   },
   {
     id: 'data-uri',
@@ -289,7 +291,7 @@ export const tools: ToolDefinition[] = [
     category: 'encode',
     tags: ['datauri', 'base64', 'file'],
     icon: FileImage,
-    component: lazy(() => import('@/tools/DataUriConverter')),
+    component: lazyTool(() => import('@/tools/DataUriConverter')),
   },
   {
     id: 'qr-code',
@@ -298,7 +300,7 @@ export const tools: ToolDefinition[] = [
     category: 'generate',
     tags: ['qrcode', 'qr'],
     icon: QrCode,
-    component: lazy(() => import('@/tools/QrCodeGenerator')),
+    component: lazyTool(() => import('@/tools/QrCodeGenerator')),
   },
   {
     id: 'qr-scanner',
@@ -307,7 +309,7 @@ export const tools: ToolDefinition[] = [
     category: 'image',
     tags: ['qrcode', 'scan', 'decode'],
     icon: ScanQrCode,
-    component: lazy(() => import('@/tools/QrCodeScanner')),
+    component: lazyTool(() => import('@/tools/QrCodeScanner')),
   },
   {
     id: 'cron',
@@ -316,7 +318,7 @@ export const tools: ToolDefinition[] = [
     category: 'datetime',
     tags: ['cron', 'schedule'],
     icon: Calendar,
-    component: lazy(() => import('@/tools/CronTool')),
+    component: lazyTool(() => import('@/tools/CronTool')),
   },
   {
     id: 'curl-converter',
@@ -325,7 +327,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['curl', 'http', 'api'],
     icon: Terminal,
-    component: lazy(() => import('@/tools/CurlConverter')),
+    component: lazyTool(() => import('@/tools/CurlConverter')),
   },
   {
     id: 'gitignore-generator',
@@ -334,7 +336,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['gitignore', 'git', 'template'],
     icon: FolderGit2,
-    component: lazy(() => import('@/tools/GitignoreGenerator')),
+    component: lazyTool(() => import('@/tools/GitignoreGenerator')),
   },
   {
     id: 'github-badge',
@@ -343,7 +345,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['github', 'badge', 'shields', 'readme', 'markdown'],
     icon: Badge,
-    component: lazy(() => import('@/tools/GithubBadgeGenerator')),
+    component: lazyTool(() => import('@/tools/GithubBadgeGenerator')),
   },
   {
     id: 'markdown-preview',
@@ -353,7 +355,7 @@ export const tools: ToolDefinition[] = [
     tags: ['markdown', 'md', 'preview'],
     icon: FileCode,
     layout: 'immersive',
-    component: lazy(() => import('@/tools/MarkdownPreview')),
+    component: lazyTool(() => import('@/tools/MarkdownPreview')),
   },
   {
     id: 'ip-lookup',
@@ -362,7 +364,7 @@ export const tools: ToolDefinition[] = [
     category: 'dev',
     tags: ['ip', 'geo', 'network'],
     icon: Network,
-    component: lazy(() => import('@/tools/IpLookup')),
+    component: lazyTool(() => import('@/tools/IpLookup')),
   },
   {
     id: 'image-resizer',
@@ -371,7 +373,7 @@ export const tools: ToolDefinition[] = [
     category: 'image',
     tags: ['image', 'resize'],
     icon: Image,
-    component: lazy(() => import('@/tools/ImageResizer')),
+    component: lazyTool(() => import('@/tools/ImageResizer')),
   },
   {
     id: 'image-compressor',
@@ -380,7 +382,7 @@ export const tools: ToolDefinition[] = [
     category: 'image',
     tags: ['image', 'compress', 'optimize'],
     icon: FileImage,
-    component: lazy(() => import('@/tools/ImageCompressor')),
+    component: lazyTool(() => import('@/tools/ImageCompressor')),
   },
   {
     id: 'image-convert',
@@ -389,7 +391,16 @@ export const tools: ToolDefinition[] = [
     category: 'image',
     tags: ['image', 'convert', 'png', 'jpg', 'webp', 'avif', 'ico', 'favicon'],
     icon: ScanLine,
-    component: lazy(() => import('@/tools/ImageFormatConverter')),
+    component: lazyTool(() => import('@/tools/ImageFormatConverter')),
+  },
+  {
+    id: 'steam-balance',
+    name: 'Steam 倒余额计算器',
+    description: '计算 Steam 市场手续费与挂刀/倒余额比例，支持目标金额反推',
+    category: 'game',
+    tags: ['steam', '倒余额', '挂刀', '手续费', '饰品', 'cs2', '钱包'],
+    icon: Wallet,
+    component: lazyTool(() => import('@/tools/SteamBalanceCalculator')),
   },
 ]
 

@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { validateNumericTimestamp } from '@/lib/input-validation'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 function detectUnit(ts: number): 's' | 'ms' | 'µs' | 'ns' {
   if (ts > 1e18) return 'ns'
@@ -36,9 +37,16 @@ function syncFromMs(ms: number, setTimestamp: (v: string) => void, setTimestampM
 }
 
 export default function TimestampConverter() {
-  const [timestamp, setTimestamp] = useState('')
-  const [timestampMs, setTimestampMs] = useState('')
-  const [datetime, setDatetime] = useState('')
+  const [timestamp, setTimestamp] = useToolDraft('timestamp', 'ts', '', { queryParam: 'ts' })
+  const seeded = (() => {
+    if (!timestamp.trim()) return { ms: '', dt: '' }
+    const validated = validateNumericTimestamp(timestamp, '时间戳')
+    if (typeof validated === 'string') return { ms: '', dt: '' }
+    const ms = toMs(validated, detectUnit(validated))
+    return { ms: String(Math.floor(ms)), dt: toIsoLocal(new Date(ms)) }
+  })()
+  const [timestampMs, setTimestampMs] = useState(seeded.ms)
+  const [datetime, setDatetime] = useState(seeded.dt)
   const [error, setError] = useState('')
   const [now, setNow] = useState(0)
 

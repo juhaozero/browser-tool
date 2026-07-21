@@ -3,11 +3,12 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { formatJson } from '@/lib/utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_JSON = '{"name":"Browser Tool","version":1,"tags":["json","format"],"active":true}'
 
 export default function JsonFormatter() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('json-formatter', 'input', '', { queryParam: 'input' })
   const [indent, setIndent] = useState(2)
   const [mode, setMode] = useState<'format' | 'minify'>('format')
 

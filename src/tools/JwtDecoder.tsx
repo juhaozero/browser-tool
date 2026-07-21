@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { BASE64URL_PART_RE } from '@/lib/input-validation'
 import { decodeJwtPart, formatJson } from '@/lib/utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_JWT =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
 
 export default function JwtDecoder() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('jwt-decoder', 'input', '', { queryParam: 'token' })
 
   const result = useMemo(() => {
     if (!input.trim()) return { header: '', payload: '', error: '' }

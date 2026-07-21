@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Input, Select, ToolPanel, ToolSection } from '@/components/ui'
 import { CRON_PRESETS, describeCron, getNextCronRuns, validateCron } from '@/lib/cron-utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_CRON = '0 9 * * 1'
 
@@ -20,7 +21,7 @@ function applyCronExpression(
 
 export default function CronTool() {
   const [mode, setMode] = useState<'parse' | 'build'>('parse')
-  const [expr, setExpr] = useState(EXAMPLE_CRON)
+  const [expr, setExpr] = useToolDraft('cron', 'expr', EXAMPLE_CRON, { queryParam: 'expr' })
   const [preset, setPreset] = useState('')
   const [minute, setMinute] = useState('0')
   const [hour, setHour] = useState('9')

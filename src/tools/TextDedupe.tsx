@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { dedupeLines } from '@/lib/text-dedupe'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE = `apple
 banana
@@ -14,7 +15,7 @@ banana
 `
 
 export default function TextDedupe() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('text-dedupe', 'input', '')
   const [trimLines, setTrimLines] = useState(true)
   const [ignoreEmpty, setIgnoreEmpty] = useState(true)
   const [caseSensitive, setCaseSensitive] = useState(true)

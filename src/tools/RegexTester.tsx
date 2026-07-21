@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Input, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { REGEX_FLAGS_RE } from '@/lib/input-validation'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_PATTERN = '\\d{3,4}-\\d{7,8}'
 const EXAMPLE_TEXT = '联系电话：010-12345678，手机：13812345678'
 
 export default function RegexTester() {
-  const [pattern, setPattern] = useState('')
-  const [flags, setFlags] = useState('g')
-  const [text, setText] = useState('')
+  const [pattern, setPattern] = useToolDraft('regex-tester', 'pattern', '', { queryParam: 'pattern' })
+  const [flags, setFlags] = useToolDraft('regex-tester', 'flags', 'g', { queryParam: 'flags' })
+  const [text, setText] = useToolDraft('regex-tester', 'text', '', { queryParam: 'text' })
   const [replacement, setReplacement] = useState('')
 
   const result = useMemo(() => {

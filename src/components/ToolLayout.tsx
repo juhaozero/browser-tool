@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
 import type { ToolDefinition } from '@/types/tool'
 import { getCategoryLabel } from '@/data/tools'
 import { setLastToolId } from '@/lib/last-tool'
+import { isFavoriteTool } from '@/lib/favorites'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { RelatedTools } from '@/components/RelatedTools'
 
 interface ToolLayoutProps {
   tool: ToolDefinition
@@ -12,75 +15,80 @@ interface ToolLayoutProps {
   immersive?: boolean
 }
 
-/** 工具页通用外壳：标题、返回链接、隐私提示条 */
-export function ToolLayout({ tool, children, immersive = false }: ToolLayoutProps) {
+function ToolChrome({
+  tool,
+  children,
+  immersive,
+}: {
+  tool: ToolDefinition
+  children: ReactNode
+  immersive: boolean
+}) {
   const Icon = tool.icon
+  const [favorite, setFavorite] = useState(() => isFavoriteTool(tool.id))
 
   useEffect(() => {
     setLastToolId(tool.id)
   }, [tool.id])
 
+  const crumb = (
+    <div className="flex flex-wrap items-center gap-1.5 text-sm text-[var(--text-muted)]">
+      <Link
+        to="/"
+        state={{ scrollToTool: tool.id }}
+        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition hover:bg-[var(--bg-muted)] hover:text-[var(--text)]"
+      >
+        <ArrowLeft size={14} />
+        工具
+      </Link>
+      <ChevronRight size={14} className="opacity-50" />
+      <Link
+        to={`/?category=${tool.category}`}
+        className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 transition hover:bg-[var(--bg-muted)] hover:text-[var(--text)]"
+      >
+        <span className={`cat-dot cat-${tool.category}`} />
+        {getCategoryLabel(tool.category)}
+      </Link>
+      <ChevronRight size={14} className="opacity-50" />
+      <span className="inline-flex min-w-0 items-center gap-1.5 px-1.5 py-1 font-medium text-[var(--text)]">
+        <Icon size={15} className="shrink-0 text-[var(--accent)]" />
+        <span className="truncate">{tool.name}</span>
+      </span>
+      <FavoriteButton toolId={tool.id} favorite={favorite} onChange={setFavorite} className="ml-auto" />
+    </div>
+  )
+
   if (immersive) {
     return (
       <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col">
-        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
-          <Link
-            to="/"
-            state={{ scrollToTool: tool.id }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1.5 text-sm text-[var(--text-muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <ArrowLeft size={15} />
-            返回
-          </Link>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Icon size={18} className="shrink-0 text-[var(--accent)]" />
-            <h1 className="truncate text-lg font-semibold text-[var(--text)]">{tool.name}</h1>
-            <span className="hidden rounded-md bg-[var(--bg-muted)] px-2 py-0.5 text-xs text-[var(--text-muted)] sm:inline">
-              {getCategoryLabel(tool.category)}
-            </span>
-          </div>
-        </div>
+        <div className="mb-3 shrink-0">{crumb}</div>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+        <div className="mt-4 shrink-0">
+          <RelatedTools toolId={tool.id} />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <Link
-          to="/"
-          state={{ scrollToTool: tool.id }}
-          className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-muted)] shadow-sm transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-        >
-          <ArrowLeft size={16} />
-          返回工具列表
-        </Link>
-
-        <div className="flex items-start gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[color-mix(in_srgb,var(--accent)_20%,transparent)] to-[color-mix(in_srgb,var(--accent)_6%,transparent)] text-[var(--accent)] ring-1 ring-[color-mix(in_srgb,var(--accent)_25%,transparent)] shadow-[var(--shadow-card)]">
-            <Icon size={26} strokeWidth={2} />
-          </div>
-          <div className="min-w-0 pt-0.5">
-            <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
-                {tool.name}
-              </h1>
-              <span className="rounded-lg bg-[var(--bg-muted)] px-2.5 py-1 text-xs font-medium text-[var(--text-muted)]">
-                {getCategoryLabel(tool.category)}
-              </span>
-            </div>
-            <p className="text-[var(--text-muted)]">{tool.description}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* <div className="flex items-center gap-2.5 rounded-xl border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-[color-mix(in_srgb,var(--success)_6%,transparent)] px-4 py-3 text-sm text-[var(--success)]">
-        <ShieldCheck size={17} className="shrink-0" />
-        所有处理均在浏览器本地完成
-      </div> */}
+    <div className="mx-auto max-w-5xl space-y-5">
+      <header className="space-y-2 border-b border-[var(--border)] pb-4">
+        {crumb}
+        <p className="max-w-3xl text-sm leading-relaxed text-[var(--text-muted)]">{tool.description}</p>
+      </header>
 
       {children}
+
+      <RelatedTools toolId={tool.id} />
     </div>
+  )
+}
+
+/** 工具页通用外壳：面包屑、收藏、相关推荐 */
+export function ToolLayout({ tool, children, immersive = false }: ToolLayoutProps) {
+  return (
+    <ToolChrome key={tool.id} tool={tool} immersive={immersive}>
+      {children}
+    </ToolChrome>
   )
 }

@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { formatCss, formatJs, minifyCss, minifyJs } from '@/lib/code-format'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 type Lang = 'css' | 'js'
 type Mode = 'format' | 'minify'
@@ -14,7 +15,7 @@ export default function CodeFormatter() {
   const [lang, setLang] = useState<Lang>('css')
   const [mode, setMode] = useState<Mode>('format')
   const [indent, setIndent] = useState(2)
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('code-formatter', 'input', '', { queryParam: 'input' })
 
   const result = useMemo(() => {
     if (!input.trim()) return { output: '', error: '' }

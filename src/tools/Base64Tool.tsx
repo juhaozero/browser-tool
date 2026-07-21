@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
-import { base64Decode, base64Encode } from '@/lib/utils'
+import { base64Encode, base64Decode } from '@/lib/utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_PLAIN = 'Hello, Browser Tool! 你好世界 🌍'
 const EXAMPLE_BASE64 = 'SGVsbG8sIEJyb3dzZXIgVG9vbCEg5L2g5aW95LiW55WMIPCfjIw='
 
 export default function Base64Tool() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('base64', 'input', '', { queryParam: 'input' })
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
 

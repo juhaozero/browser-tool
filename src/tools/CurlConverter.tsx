@@ -3,6 +3,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Select, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { curlToFetch, curlToGo, curlToPython, parseCurl } from '@/lib/curl-parser'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_CURL = `curl -X POST 'https://api.example.com/users' \\
   -H 'Content-Type: application/json' \\
@@ -10,7 +11,7 @@ const EXAMPLE_CURL = `curl -X POST 'https://api.example.com/users' \\
   -d '{"name":"张三","email":"zhang@example.com"}'`
 
 export default function CurlConverter() {
-  const [input, setInput] = useState(EXAMPLE_CURL)
+  const [input, setInput] = useToolDraft('curl-converter', 'input', EXAMPLE_CURL, { queryParam: 'curl' })
   const [lang, setLang] = useState('fetch')
 
   const result = useMemo(() => {

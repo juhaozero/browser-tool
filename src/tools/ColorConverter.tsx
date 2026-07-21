@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { Alert, Input, ToolPanel, ToolSection } from '@/components/ui'
 import { hslToRgb, parseHexColor, rgbToHsl } from '@/lib/utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
@@ -13,12 +14,25 @@ function clampChannel(value: string, max: number): number {
   return Math.min(max, Math.max(0, Math.round(n)))
 }
 
+function stateFromHex(hexValue: string) {
+  const parsed = parseHexColor(hexValue) ?? { r: 8, g: 145, b: 178 }
+  const hslVal = rgbToHsl(parsed.r, parsed.g, parsed.b)
+  return {
+    hex: rgbToHex(parsed.r, parsed.g, parsed.b),
+    rgb: parsed,
+    hsl: hslVal,
+    rgbText: { r: String(parsed.r), g: String(parsed.g), b: String(parsed.b) },
+    hslText: { h: String(hslVal.h), s: String(hslVal.s), l: String(hslVal.l) },
+  }
+}
+
 export default function ColorConverter() {
-  const [hex, setHex] = useState('#0891b2')
-  const [rgb, setRgb] = useState({ r: 8, g: 145, b: 178 })
-  const [hsl, setHsl] = useState({ h: 192, s: 92, l: 36 })
-  const [rgbText, setRgbText] = useState({ r: '8', g: '145', b: '178' })
-  const [hslText, setHslText] = useState({ h: '192', s: '92', l: '36' })
+  const [hex, setHex] = useToolDraft('color-converter', 'hex', '#0891b2', { queryParam: 'hex' })
+  const initial = stateFromHex(hex)
+  const [rgb, setRgb] = useState(initial.rgb)
+  const [hsl, setHsl] = useState(initial.hsl)
+  const [rgbText, setRgbText] = useState(initial.rgbText)
+  const [hslText, setHslText] = useState(initial.hslText)
   const [hexError, setHexError] = useState('')
 
   const applyParsedHex = (parsed: { r: number; g: number; b: number }) => {

@@ -12,7 +12,7 @@ interface ToolPanelProps {
 export function ToolPanel({ children, className = '' }: ToolPanelProps) {
   return (
     <div
-      className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-card)] sm:p-6 ${className}`}
+      className={`rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-4 sm:p-5 ${className}`}
     >
       {children}
     </div>
@@ -85,9 +85,9 @@ export function Button({
 }: ButtonProps) {
   const styles = {
     primary:
-      'bg-[var(--accent)] text-white shadow-[0_2px_8px_color-mix(in_srgb,var(--accent)_35%,transparent)] hover:bg-[var(--accent-hover)] hover:shadow-[0_4px_14px_color-mix(in_srgb,var(--accent)_40%,transparent)]',
+      'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]',
     secondary:
-      'border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] shadow-sm hover:border-[var(--accent)] hover:text-[var(--accent)]',
+      'border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text)] hover:border-[var(--accent)] hover:text-[var(--accent)]',
     ghost: 'text-[var(--text-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--text)]',
   }
 
@@ -96,7 +96,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]}`}
     >
       {children}
     </button>

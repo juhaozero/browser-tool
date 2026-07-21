@@ -3,11 +3,12 @@ import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
 import { formatSql, minifySql } from '@/lib/sql-format'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE = `select u.id, u.name, count(o.id) as order_count from users u left join orders o on o.user_id = u.id where u.active = true and u.created_at > '2024-01-01' group by u.id, u.name having count(o.id) > 0 order by order_count desc limit 20;`
 
 export default function SqlFormatter() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('sql-formatter', 'input', '', { queryParam: 'input' })
   const [indent, setIndent] = useState(2)
   const [mode, setMode] = useState<'format' | 'minify'>('format')
 

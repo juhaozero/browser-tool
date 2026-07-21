@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { CopyButton } from '@/components/CopyButton'
 import { ExampleButton } from '@/components/ExampleButton'
 import { Alert, Button, ToolPanel, ToolSection, TextArea } from '@/components/ui'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE_URL = 'https://example.com/search?q=你好世界&lang=zh'
 
 export default function UrlEncoder() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('url-encoder', 'input', '', { queryParam: 'input' })
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
 

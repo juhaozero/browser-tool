@@ -8,6 +8,7 @@ import {
   unescapeText,
   type EscapeMode,
 } from '@/lib/unicode-escape'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const EXAMPLE = '你好 Browser Tool 🚀\nLine 2'
 
@@ -21,7 +22,7 @@ const MODE_OPTIONS: { value: EscapeMode; label: string }[] = [
 ]
 
 export default function UnicodeEscape() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('unicode-escape', 'input', '', { queryParam: 'input' })
   const [mode, setMode] = useState<EscapeMode>('unicode')
   const [direction, setDirection] = useState<'escape' | 'unescape'>('escape')
 

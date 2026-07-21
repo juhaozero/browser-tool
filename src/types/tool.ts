@@ -15,6 +15,7 @@ export type ToolCategory =
   | 'datetime'
   | 'dev'
   | 'image'
+  | 'game'
 
 export interface ToolDefinition {
   id: string // 路由标识，对应 /tool/:toolId

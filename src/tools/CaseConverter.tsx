@@ -9,6 +9,7 @@ import {
   toPascalCase,
   toSnakeCase,
 } from '@/lib/utils'
+import { useToolDraft } from '@/hooks/useToolDraft'
 
 const styles = [
   { value: 'camel', label: '小驼峰命名', fn: toCamelCase },
@@ -19,7 +20,7 @@ const styles = [
 ]
 
 export default function CaseConverter() {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useToolDraft('case-converter', 'input', '', { queryParam: 'input' })
   const [style, setStyle] = useState('camel')
 
   const output = useMemo(() => {
