@@ -43,6 +43,7 @@ import {
   FileKey,
   Languages,
   Wallet,
+  Globe2,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
@@ -55,7 +56,7 @@ export const categories: CategoryMeta[] = [
   { id: 'datetime', label: '日期时间', description: '时间戳、Cron 等时间工具' },
   { id: 'dev', label: '开发调试', description: '正则、颜色、cURL、URL 解析、证书等开发者常用工具' },
   { id: 'image', label: '图片处理', description: '缩放、压缩、格式转换、二维码识别等图片工具' },
-  { id: 'game', label: '游戏工具', description: 'Steam 倒余额、市场手续费等游戏向实用计算' },
+  { id: 'game', label: '游戏工具', description: 'Steam 倒余额、区服汇率比价等游戏向实用计算' },
 ]
 
 export const tools: ToolDefinition[] = [
@@ -401,6 +402,15 @@ export const tools: ToolDefinition[] = [
     tags: ['steam', '倒余额', '挂刀', '手续费', '饰品', 'cs2', '钱包'],
     icon: Wallet,
     component: lazyTool(() => import('@/tools/SteamBalanceCalculator')),
+  },
+  {
+    id: 'steam-region-fx',
+    name: 'Steam 区服汇率比价',
+    description: '将各区服本币标价换算到统一货币比价，支持实时汇率与购卡折扣',
+    category: 'game',
+    tags: ['steam', '区服', '汇率', '比价', '阿区', '土区', '俄区', '钥匙', '礼品卡'],
+    icon: Globe2,
+    component: lazyTool(() => import('@/tools/SteamRegionFx')),
   },
 ]
 
