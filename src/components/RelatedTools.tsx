@@ -11,9 +11,7 @@ export function RelatedTools({ toolId }: { toolId: string }) {
 
   return (
     <section className="space-y-2.5 border-t border-[var(--border)] pt-5">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-        Related
-      </h2>
+      <h2 className="text-sm font-semibold text-[var(--text)]">相关工具</h2>
       <div className="grid gap-2 sm:grid-cols-2">
         {related.map((tool) => {
           if (!tool) return null

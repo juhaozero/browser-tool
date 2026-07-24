@@ -8,6 +8,7 @@ import { setLastToolId } from '@/lib/last-tool'
 import { isFavoriteTool } from '@/lib/favorites'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { RelatedTools } from '@/components/RelatedTools'
+import { ToolSeoContent } from '@/components/ToolSeoContent'
 
 interface ToolLayoutProps {
   tool: ToolDefinition
@@ -63,7 +64,8 @@ function ToolChrome({
       <div className="flex min-h-[calc(100dvh-5rem)] w-full flex-col">
         <div className="mb-3 shrink-0">{crumb}</div>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
-        <div className="mt-4 shrink-0">
+        <div className="mt-4 shrink-0 space-y-5">
+          <ToolSeoContent tool={tool} />
           <RelatedTools toolId={tool.id} />
         </div>
       </div>
@@ -79,12 +81,13 @@ function ToolChrome({
 
       {children}
 
+      <ToolSeoContent tool={tool} />
       <RelatedTools toolId={tool.id} />
     </div>
   )
 }
 
-/** 工具页通用外壳：面包屑、收藏、相关推荐 */
+/** 工具页通用外壳：面包屑、收藏、SEO 正文、相关推荐 */
 export function ToolLayout({ tool, children, immersive = false }: ToolLayoutProps) {
   return (
     <ToolChrome key={tool.id} tool={tool} immersive={immersive}>

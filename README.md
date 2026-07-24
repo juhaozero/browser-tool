@@ -73,7 +73,14 @@ pnpm run dev -- --host 0.0.0.0 --port 3000
 
 本项目是纯静态站点。执行 `pnpm run build` 后，`dist/` 目录即为可部署的完整产物。
 
-构建末尾会预渲染各工具页 HTML（`dist/tool/{id}/index.html`），写入独立的 `<title>` / `<meta description>`，便于搜索引擎收录。部署时请上传**整个** `dist/`，不要只传首页。
+构建末尾会预渲染各工具页 HTML（`dist/tool/{id}/index.html`），写入：
+
+- `<title>` / `<meta description>` / Open Graph / Twitter Card
+- 结构化正文（介绍 / 要点 / FAQ）与相关工具内链
+- JSON-LD（`WebApplication` + `BreadcrumbList` + 可选 `FAQPage`）
+- 分享图 `dist/og/home.png` 与 `dist/og/tool-{id}.png`（无 CJK 字体时回退为 SVG）
+
+增强文案维护在 `src/data/tool-seo.json`。部署时请上传**整个** `dist/`，不要只传首页。OG PNG 优先使用系统中文字体，也可将字体放到 `scripts/assets/fonts/` 或设置 `OG_FONT_PATH`。
 
 ### 子路径部署
 

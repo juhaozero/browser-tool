@@ -16,6 +16,35 @@ export type ToolCategory =
   | 'dev'
   | 'image'
   | 'game'
+  | 'health'
+
+/** 工具页 SEO 文案（预渲染 + 页面可见正文共用） */
+export interface ToolSeoFaq {
+  q: string
+  a: string
+}
+
+export interface ToolSeo {
+  /** 覆盖默认 title；缺省为「{name} — Browser Tool」 */
+  title?: string
+  /** meta / og description，建议 80–160 字 */
+  description?: string
+  /** 页面可见长介绍，承接长尾搜索意图 */
+  intro?: string
+  /** 功能要点列表 */
+  bullets?: string[]
+  /** 常见问题，可生成 FAQPage JSON-LD */
+  faqs?: ToolSeoFaq[]
+}
+
+/** 解析后的完整 SEO（字段均已填好默认值） */
+export interface ResolvedToolSeo {
+  title: string
+  description: string
+  intro: string
+  bullets: string[]
+  faqs: ToolSeoFaq[]
+}
 
 export interface ToolDefinition {
   id: string // 路由标识，对应 /tool/:toolId

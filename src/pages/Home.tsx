@@ -193,7 +193,7 @@ export default function Home() {
           浏览器工具箱
         </h1>
         <p className="mb-6 max-w-xl text-sm leading-relaxed text-[var(--text-muted)] sm:text-[15px]">
-          编解码、格式化、哈希与图片处理，绝大多数在本地完成。按{' '}
+          绝大多数在本地完成。按{' '}
           <kbd className="rounded border border-[var(--border)] bg-[var(--bg-muted)] px-1.5 py-0.5 font-mono text-[11px]">
             {hint}
           </kbd>{' '}

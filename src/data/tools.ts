@@ -44,6 +44,7 @@ import {
   Languages,
   Wallet,
   Globe2,
+  Activity,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
@@ -57,6 +58,7 @@ export const categories: CategoryMeta[] = [
   { id: 'dev', label: '开发调试', description: '正则、颜色、cURL、URL 解析、证书等开发者常用工具' },
   { id: 'image', label: '图片处理', description: '缩放、压缩、格式转换、二维码识别等图片工具' },
   { id: 'game', label: '游戏工具', description: 'Steam 倒余额、区服汇率比价等游戏向实用计算' },
+  { id: 'health', label: '健康生活', description: 'BMI、体脂率等健康指标计算' },
 ]
 
 export const tools: ToolDefinition[] = [
@@ -411,6 +413,15 @@ export const tools: ToolDefinition[] = [
     tags: ['steam', '区服', '汇率', '比价', '阿区', '土区', '俄区', '钥匙', '礼品卡'],
     icon: Globe2,
     component: lazyTool(() => import('@/tools/SteamRegionFx')),
+  },
+  {
+    id: 'bmi-body-fat',
+    name: 'BMI / 体脂率计算器',
+    description: '计算 BMI 与体脂率，支持中国成人标准与围度法估算',
+    category: 'health',
+    tags: ['bmi', '体脂', '体脂率', '体重', '健康', '肥胖'],
+    icon: Activity,
+    component: lazyTool(() => import('@/tools/BmiBodyFatCalculator')),
   },
 ]
 

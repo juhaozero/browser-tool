@@ -39,6 +39,7 @@
   --cat-dev: #047857;
   --cat-image: #c2410c;
   --cat-game: #15803d;
+  --cat-health: #be185d;
 }
 
 .dark {
@@ -65,6 +66,7 @@
   --cat-dev: #34d399;
   --cat-image: #fb923c;
   --cat-game: #4ade80;
+  --cat-health: #f472b6;
 }
 
 * {
@@ -120,6 +122,7 @@ body {
 .cat-dev { --cat-color: var(--cat-dev); }
 .cat-image { --cat-color: var(--cat-image); }
 .cat-game { --cat-color: var(--cat-game); }
+.cat-health { --cat-color: var(--cat-health); }
 
 /* 高亮卡片短暂脉冲 */
 @keyframes tool-highlight {
