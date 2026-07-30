@@ -45,12 +45,16 @@ import {
   Wallet,
   Globe2,
   Activity,
+  FileJson,
+  ArrowLeftRight,
+  Calculator,
+  Diff,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
 export const categories: CategoryMeta[] = [
   { id: 'encode', label: '编码转换', description: 'Base64、URL、HTML 实体、Unicode Escape、Data URI 等' },
-  { id: 'format', label: '格式化', description: 'JSON、SQL、Markdown、CSS/JS 等结构化数据格式化' },
+  { id: 'format', label: '格式化', description: 'JSON、YAML/XML/TOML、SQL、Markdown、CSS/JS 等结构化数据格式化' },
   { id: 'generate', label: '生成器', description: 'UUID、密码、短 ID、二维码、假数据等快速生成' },
   { id: 'crypto', label: '加密哈希', description: 'AES、哈希、JWT 编解码与验签等密码学工具' },
   { id: 'text', label: '文本处理', description: '大小写转换、文本统计、对比等' },
@@ -72,6 +76,33 @@ export const tools: ToolDefinition[] = [
     component: lazyTool(() => import('@/tools/JsonFormatter')),
   },
   {
+    id: 'markup-formatter',
+    name: 'YAML / XML / TOML 格式化',
+    description: 'YAML、XML、TOML 美化、压缩与语法校验',
+    category: 'format',
+    tags: ['yaml', 'xml', 'toml', 'format', 'validate'],
+    icon: FileJson,
+    component: lazyTool(() => import('@/tools/MarkupFormatter')),
+  },
+  {
+    id: 'data-converter',
+    name: 'JSON 数据互转',
+    description: 'JSON 与 YAML、XML、CSV 互相转换',
+    category: 'format',
+    tags: ['json', 'yaml', 'xml', 'csv', 'convert'],
+    icon: ArrowLeftRight,
+    component: lazyTool(() => import('@/tools/DataConverter')),
+  },
+  {
+    id: 'json-diff',
+    name: 'JSON Diff',
+    description: '按路径对比两份 JSON 的新增、删除与修改',
+    category: 'format',
+    tags: ['json', 'diff', 'compare'],
+    icon: Diff,
+    component: lazyTool(() => import('@/tools/JsonDiff')),
+  },
+  {
     id: 'sql-formatter',
     name: 'SQL 格式化',
     description: 'SQL 美化与压缩，关键字大写与子句缩进',
@@ -88,6 +119,15 @@ export const tools: ToolDefinition[] = [
     tags: ['css', 'javascript', 'minify', 'beautify'],
     icon: WandSparkles,
     component: lazyTool(() => import('@/tools/CodeFormatter')),
+  },
+  {
+    id: 'radix-converter',
+    name: '进制转换',
+    description: '二进制、八进制、十进制、十六进制互转',
+    category: 'dev',
+    tags: ['radix', 'binary', 'hex', 'octal', 'decimal', '进制'],
+    icon: Calculator,
+    component: lazyTool(() => import('@/tools/RadixConverter')),
   },
   {
     id: 'base64',

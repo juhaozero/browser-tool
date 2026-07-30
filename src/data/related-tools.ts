@@ -3,10 +3,14 @@
  * 未列出的工具会回退到同分类其它工具
  */
 export const relatedToolMap: Record<string, string[]> = {
-  'json-formatter': ['sql-formatter', 'code-formatter', 'markdown-preview'],
-  'sql-formatter': ['json-formatter', 'code-formatter'],
+  'json-formatter': ['data-converter', 'json-diff', 'markup-formatter'],
+  'markup-formatter': ['data-converter', 'json-formatter', 'sql-formatter'],
+  'data-converter': ['json-formatter', 'markup-formatter', 'json-diff'],
+  'json-diff': ['json-formatter', 'text-diff', 'data-converter'],
+  'sql-formatter': ['json-formatter', 'code-formatter', 'markup-formatter'],
   'code-formatter': ['json-formatter', 'sql-formatter', 'regex-tester'],
   'markdown-preview': ['json-formatter', 'html-entity', 'github-badge'],
+  'radix-converter': ['hash', 'color-converter', 'timestamp'],
   base64: ['data-uri', 'url-encoder', 'hash'],
   'url-encoder': ['url-parser', 'base64', 'html-entity'],
   'url-parser': ['url-encoder', 'curl-converter'],
@@ -26,7 +30,7 @@ export const relatedToolMap: Record<string, string[]> = {
   'image-convert': ['image-compressor', 'image-resizer', 'data-uri'],
   'image-compressor': ['image-resizer', 'image-convert'],
   'image-resizer': ['image-compressor', 'image-convert'],
-  'text-diff': ['text-statistics', 'text-dedupe', 'case-converter'],
+  'text-diff': ['json-diff', 'text-statistics', 'text-dedupe'],
   'text-statistics': ['text-diff', 'text-dedupe', 'lorem-generator'],
   'text-dedupe': ['text-diff', 'case-converter'],
   'case-converter': ['text-dedupe', 'regex-tester'],

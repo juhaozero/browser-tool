@@ -20,6 +20,82 @@
       }
     ]
   },
+  "markup-formatter": {
+    "title": "在线 YAML XML TOML 格式化校验 — Browser Tool",
+    "description": "YAML / XML / TOML 在线美化、压缩与语法校验，本地解析配置文件，适合 DevOps 与前后端联调。",
+    "intro": "配置文件经常是挤在一行或缩进错乱。本工具支持 YAML、XML、TOML 的格式化、压缩与校验，全部在浏览器本地完成，方便整理 Docker Compose、CI 配置与应用配置。",
+    "bullets": [
+      "YAML / XML / TOML 一键美化",
+      "压缩与语法校验",
+      "可调缩进，适合阅读与提交",
+      "本地处理，配置不上传"
+    ],
+    "faqs": [
+      {
+        "q": "YAML 和 JSON 有什么区别？",
+        "a": "YAML 更适合人工编辑的配置，支持注释与多行；JSON 更适合接口传输。可用本站的「JSON 数据互转」在二者之间转换。"
+      },
+      {
+        "q": "TOML 压缩会变成一行吗？",
+        "a": "TOML 没有像 JSON 那样的标准 minify。本工具在压缩模式下会校验语法并去掉空行，便于整理，而不是强行压成一行。"
+      }
+    ]
+  },
+  "data-converter": {
+    "title": "在线 JSON YAML XML CSV 互转 — Browser Tool",
+    "description": "JSON 与 YAML、XML、CSV 互相转换：本地完成数据格式互通，适合配置迁移、表格导出与接口联调。",
+    "intro": "同一份数据常常要在 JSON、YAML、XML、CSV 之间切换。本工具在浏览器本地完成互转，方便把接口报文改成配置、把表格导出成 JSON，或反过来。",
+    "bullets": [
+      "JSON ↔ YAML",
+      "JSON ↔ XML",
+      "JSON ↔ CSV（对象数组）",
+      "本地转换，数据不离开浏览器"
+    ],
+    "faqs": [
+      {
+        "q": "JSON 转 CSV 有什么要求？",
+        "a": "需要对象数组（或二维数组）。表头由对象字段汇总生成；嵌套对象会序列化为 JSON 字符串写入单元格。"
+      },
+      {
+        "q": "XML 转换如何命名标签？",
+        "a": "对象字段名会作为子标签；数组元素统一使用 item 标签。非法字符会被替换为安全标签名。"
+      }
+    ]
+  },
+  "json-diff": {
+    "title": "在线 JSON Diff 结构化对比 — Browser Tool",
+    "description": "按路径对比两份 JSON 的新增、删除与修改，本地结构化 Diff，适合配置变更与接口报文校对。",
+    "intro": "两份 JSON 看起来差不多，却很难肉眼找出字段差异。本工具按路径做结构化对比，标出新增、删除与修改，比纯文本 Diff 更适合对象与数组。",
+    "bullets": [
+      "按 JSON Path 对比差异",
+      "区分新增 / 删除 / 修改",
+      "适合配置与接口报文",
+      "本地对比，内容不上传"
+    ],
+    "faqs": [
+      {
+        "q": "和文本 Diff 有什么不同？",
+        "a": "文本 Diff 按行比较；JSON Diff 理解对象结构，字段顺序变化通常不会误报，并能指出具体路径上的变更。"
+      }
+    ]
+  },
+  "radix-converter": {
+    "title": "在线进制转换 二八十六进制 — Browser Tool",
+    "description": "二进制、八进制、十进制、十六进制互转，支持大整数与 0b/0o/0x 前缀，本地即时换算。",
+    "intro": "调试底层数据、颜色值、权限掩码或协议字段时经常要换算进制。本工具支持二/八/十/十六进制互转，可用 BigInt 处理超大整数，全部在本地完成。",
+    "bullets": [
+      "Bin / Oct / Dec / Hex 互转",
+      "支持 0b / 0o / 0x 前缀",
+      "支持空格与下划线分隔",
+      "BigInt 大整数，本地计算"
+    ],
+    "faqs": [
+      {
+        "q": "支持负数吗？",
+        "a": "当前版本面向无符号非负整数。若需要补码表示，可先按位宽自行换算后再输入。"
+      }
+    ]
+  },
   "sql-formatter": {
     "title": "在线 SQL 格式化美化压缩 — Browser Tool",
     "description": "SQL 在线美化与压缩：关键字大写、子句缩进排版，本地格式化查询语句，方便阅读与 Code Review。",
