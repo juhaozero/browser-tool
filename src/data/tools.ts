@@ -49,6 +49,7 @@ import {
   ArrowLeftRight,
   Calculator,
   Diff,
+  AppWindow,
 } from 'lucide-react'
 import type { CategoryMeta, ToolDefinition } from '@/types/tool'
 
@@ -435,6 +436,15 @@ export const tools: ToolDefinition[] = [
     tags: ['image', 'convert', 'png', 'jpg', 'webp', 'avif', 'ico', 'favicon'],
     icon: ScanLine,
     component: lazyTool(() => import('@/tools/ImageFormatConverter')),
+  },
+  {
+    id: 'image-to-ico-svg',
+    name: 'PNG / JPG 转 ICO / SVG',
+    description: '将 PNG、JPG 转为标准 ICO（可多尺寸）或内嵌位图的 SVG',
+    category: 'image',
+    tags: ['ico', 'svg', 'favicon', 'png', 'jpg', 'convert', '图标'],
+    icon: AppWindow,
+    component: lazyTool(() => import('@/tools/ImageToIcoSvg')),
   },
   {
     id: 'steam-balance',

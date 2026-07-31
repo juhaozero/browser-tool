@@ -173,3 +173,189 @@ export async function imageToIco(
   ctx.drawImage(img, 0, 0, size, size)
   return canvasToBlob(canvas, 'image/png')
 }
+
+export interface IcoPngFrame {
+  /** 边长；≥256 时目录项宽高写 0 */
+  size: number
+  png: Uint8Array
+}
+
+/**
+ * 将一或多张 PNG 打包为标准 ICO（Vista+ PNG 内嵌格式）
+ * @see https://en.wikipedia.org/wiki/ICO_(file_format)
+ */
+export function encodeIco(frames: IcoPngFrame[]): Blob {
+  if (frames.length === 0) throw new Error('ICO 至少需要一张图片')
+  if (frames.length > 255) throw new Error('ICO 图像数量过多')
+
+  for (const frame of frames) {
+    if (frame.size < 1 || frame.size > 256) {
+      throw new Error('ICO 单边尺寸须在 1–256px')
+    }
+    if (frame.png.byteLength < 8) throw new Error('PNG 数据无效')
+    // PNG signature
+    if (
+      frame.png[0] !== 0x89 ||
+      frame.png[1] !== 0x50 ||
+      frame.png[2] !== 0x4e ||
+      frame.png[3] !== 0x47
+    ) {
+      throw new Error('ICO 内嵌数据必须是 PNG')
+    }
+  }
+
+  const count = frames.length
+  const headerSize = 6 + 16 * count
+  let offset = headerSize
+  const entries = frames.map((frame) => {
+    const entry = {
+      width: frame.size >= 256 ? 0 : frame.size,
+      height: frame.size >= 256 ? 0 : frame.size,
+      bytes: frame.png.byteLength,
+      offset,
+    }
+    offset += frame.png.byteLength
+    return entry
+  })
+
+  const buffer = new ArrayBuffer(offset)
+  const view = new DataView(buffer)
+  const bytes = new Uint8Array(buffer)
+
+  view.setUint16(0, 0, true) // reserved
+  view.setUint16(2, 1, true) // type = ICO
+  view.setUint16(4, count, true)
+
+  let entryAt = 6
+  for (const entry of entries) {
+    view.setUint8(entryAt, entry.width)
+    view.setUint8(entryAt + 1, entry.height)
+    view.setUint8(entryAt + 2, 0) // color count
+    view.setUint8(entryAt + 3, 0) // reserved
+    view.setUint16(entryAt + 4, 1, true) // planes
+    view.setUint16(entryAt + 6, 32, true) // bit count
+    view.setUint32(entryAt + 8, entry.bytes, true)
+    view.setUint32(entryAt + 12, entry.offset, true)
+    entryAt += 16
+  }
+
+  frames.forEach((frame, i) => {
+    bytes.set(frame.png, entries[i].offset)
+  })
+
+  return new Blob([buffer], { type: 'image/x-icon' })
+}
+
+async function rasterToPngBytes(
+  img: HTMLImageElement,
+  size: number,
+  smoothingQuality: ImageSmoothingQuality,
+): Promise<Uint8Array> {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = smoothingQuality
+  // 等比居中绘制，透明底
+  const scale = Math.min(size / img.width, size / img.height)
+  const w = Math.max(1, Math.round(img.width * scale))
+  const h = Math.max(1, Math.round(img.height * scale))
+  const x = Math.floor((size - w) / 2)
+  const y = Math.floor((size - h) / 2)
+  ctx.clearRect(0, 0, size, size)
+  ctx.drawImage(img, x, y, w, h)
+  const blob = await canvasToBlob(canvas, 'image/png')
+  return new Uint8Array(await blob.arrayBuffer())
+}
+
+/** PNG/JPG → 真正的 .ico（可含多尺寸） */
+export async function imageToIcoFile(
+  file: File,
+  sizes: number[],
+  smoothingQuality: ImageSmoothingQuality = 'high',
+): Promise<Blob> {
+  const unique = [...new Set(sizes.filter((s) => s >= 1 && s <= 256))].sort((a, b) => a - b)
+  if (unique.length === 0) throw new Error('请至少选择一个有效尺寸')
+  const img = await loadImage(file)
+  const frames: IcoPngFrame[] = []
+  for (const size of unique) {
+    frames.push({ size, png: await rasterToPngBytes(img, size, smoothingQuality) })
+  }
+  return encodeIco(frames)
+}
+
+export interface ImageToSvgOptions {
+  /** 限制输出 SVG 宽高（等比），不传则用原图尺寸 */
+  maxSize?: number
+  /** 内嵌位图 MIME，默认 image/png */
+  embedMime?: 'image/png' | 'image/jpeg'
+  jpegQuality?: number
+  smoothingQuality?: ImageSmoothingQuality
+}
+
+/** PNG/JPG → SVG（以内嵌 Base64 位图方式，非矢量化描摹） */
+export async function imageToSvg(
+  file: File,
+  options: ImageToSvgOptions = {},
+): Promise<string> {
+  const {
+    maxSize,
+    embedMime = 'image/png',
+    jpegQuality = 0.92,
+    smoothingQuality = 'high',
+  } = options
+  const img = await loadImage(file)
+  let w = img.width
+  let h = img.height
+  if (maxSize && (w > maxSize || h > maxSize)) {
+    const scale = Math.min(maxSize / w, maxSize / h)
+    w = Math.max(1, Math.round(w * scale))
+    h = Math.max(1, Math.round(h * scale))
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = smoothingQuality
+  if (embedMime === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, w, h)
+  }
+  ctx.drawImage(img, 0, 0, w, h)
+
+  const blob = await canvasToBlob(
+    canvas,
+    embedMime,
+    embedMime === 'image/jpeg' ? jpegQuality : undefined,
+  )
+  const dataUrl = await blobToDataUrl(blob)
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
+    `  <image width="${w}" height="${h}" href="${dataUrl}" xlink:href="${dataUrl}" />`,
+    `</svg>`,
+  ].join('\n')
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('读取图片失败'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+/** 校验是否为常见位图输入（PNG / JPEG） */
+export function assertRasterImageFile(file: File): void {
+  const type = file.type.toLowerCase()
+  const name = file.name.toLowerCase()
+  const okMime = type === 'image/png' || type === 'image/jpeg' || type === 'image/jpg'
+  const okExt = /\.(png|jpe?g)$/.test(name)
+  if (!okMime && !okExt) {
+    throw new Error('请选择 PNG 或 JPG 图片')
+  }
+}
