@@ -4,9 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import { writeFileSync } from 'fs'
 import { DEFAULT_BASE_PATH, normalizeBasePath } from './src/config/base-path'
+import buildOutDir from './build-out-dir.json'
+
+const BUILD_OUT_DIR = buildOutDir.outDir
 
 /** 构建时按 base 路径生成 Netlify/Cloudflare Pages SPA 回退规则 */
-function spaRedirectsPlugin(basePath: string) {
+function spaRedirectsPlugin(basePath: string, outDir: string) {
   return {
     name: 'spa-redirects',
     closeBundle() {
@@ -14,7 +17,7 @@ function spaRedirectsPlugin(basePath: string) {
         basePath === '/'
           ? '/*    /index.html   200'
           : `${basePath}*    ${basePath}index.html   200`
-      writeFileSync(path.resolve(__dirname, 'dist/_redirects'), `${rule}\n`)
+      writeFileSync(path.resolve(__dirname, outDir, '_redirects'), `${rule}\n`)
     },
   }
 }
@@ -26,7 +29,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    plugins: [react(), tailwindcss(), spaRedirectsPlugin(base)],
+    build: {
+      outDir: BUILD_OUT_DIR,
+    },
+    plugins: [react(), tailwindcss(), spaRedirectsPlugin(base, BUILD_OUT_DIR)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

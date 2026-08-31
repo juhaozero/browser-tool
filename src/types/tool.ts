@@ -61,5 +61,7 @@ export interface ToolDefinition {
 export interface CategoryMeta {
   id: ToolCategory
   label: string
+  /** 首页 CategoryNav 短标签，缺省用 label */
+  navLabel?: string
   description: string
 }

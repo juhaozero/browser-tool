@@ -4,9 +4,9 @@
  * 供搜索引擎与社交平台抓取；React hydrate 后替换 #root 内容。
  *
  * 输出：
- * - dist/tool/{id}/index.html
- * - dist/og/home.{svg,png?}
- * - dist/og/tool-{id}.{svg,png?}
+ * - browser/tool/{id}/index.html
+ * - browser/og/home.{svg,png?}
+ * - browser/og/tool-{id}.{svg,png?}
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'

@@ -51,19 +51,36 @@ import {
   Diff,
   AppWindow,
 } from 'lucide-react'
-import type { CategoryMeta, ToolDefinition } from '@/types/tool'
+import type { CategoryMeta, ToolCategory, ToolDefinition } from '@/types/tool'
 
 export const categories: CategoryMeta[] = [
-  { id: 'encode', label: '编码转换', description: 'Base64、URL、HTML 实体、Unicode Escape、Data URI 等' },
+  { id: 'encode', label: '编码转换', navLabel: '编码', description: 'Base64、URL、HTML 实体、Unicode Escape、Data URI 等' },
   { id: 'format', label: '格式化', description: 'JSON、YAML/XML/TOML、SQL、Markdown、CSS/JS 等结构化数据格式化' },
-  { id: 'generate', label: '生成器', description: 'UUID、密码、短 ID、二维码、假数据等快速生成' },
-  { id: 'crypto', label: '加密哈希', description: 'AES、哈希、JWT 编解码与验签等密码学工具' },
-  { id: 'text', label: '文本处理', description: '大小写转换、文本统计、对比等' },
+  { id: 'generate', label: '生成器', navLabel: '生成', description: 'UUID、密码、短 ID、二维码、假数据等快速生成' },
+  { id: 'crypto', label: '加密哈希', navLabel: '加密', description: 'AES、哈希、JWT 编解码与验签等密码学工具' },
+  { id: 'text', label: '文本处理', navLabel: '文本', description: '大小写转换、文本统计、对比等' },
   { id: 'datetime', label: '日期时间', description: '时间戳、Cron 等时间工具' },
   { id: 'dev', label: '开发调试', description: '正则、颜色、cURL、URL 解析、证书等开发者常用工具' },
   { id: 'image', label: '图片处理', description: '缩放、压缩、格式转换、二维码识别等图片工具' },
   { id: 'game', label: '游戏工具', description: 'Steam 倒余额、区服汇率比价等游戏向实用计算' },
   { id: 'health', label: '健康生活', description: 'BMI、体脂率等健康指标计算' },
+]
+
+/** 首页 CategoryNav 数据源（「全部」+ categories，单一来源） */
+export const ALL_CATEGORY_NAV_ID = 'all'
+
+/** 首页导航栏直接展示的核心分类（不含「全部」） */
+export const CORE_CATEGORY_NAV_IDS = [
+  'encode',
+  'format',
+  'crypto',
+  'text',
+  'generate',
+] as const satisfies readonly ToolCategory[]
+
+export const categoryNavItems: Array<{ id: string; label: string }> = [
+  { id: ALL_CATEGORY_NAV_ID, label: '全部' },
+  ...categories.map(({ id, label, navLabel }) => ({ id, label: navLabel ?? label })),
 ]
 
 export const tools: ToolDefinition[] = [

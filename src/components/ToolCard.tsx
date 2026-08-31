@@ -1,8 +1,6 @@
 import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight } from 'lucide-react'
 import type { ToolDefinition } from '@/types/tool'
-import { getCategoryLabel } from '@/data/tools'
 import { toolCardId } from '@/lib/last-tool'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { isFavoriteTool } from '@/lib/favorites'
@@ -14,7 +12,7 @@ interface ToolCardProps {
   compact?: boolean
 }
 
-/** 首页工具卡片 */
+/** 首页工具卡片 — 极简深色风格 */
 export const ToolCard = memo(function ToolCard({
   tool,
   highlighted,
@@ -28,35 +26,36 @@ export const ToolCard = memo(function ToolCard({
       id={toolCardId(tool.id)}
       to={`/tool/${tool.id}`}
       onPointerEnter={() => preloadToolComponent(tool.component)}
-      className={`tool-card group relative flex scroll-mt-28 flex-col rounded-xl border bg-[var(--bg-elevated)] transition duration-150 hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--border))] ${
+      className={`tool-card group relative flex scroll-mt-28 flex-col rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] shadow-sm transition-all duration-200 ease-out hover:border-[color-mix(in_srgb,var(--accent)_40%,var(--border))] hover:bg-[var(--bg-muted)] dark:hover:bg-slate-800 ${
         compact ? 'p-3.5' : 'p-4'
-      } ${highlighted ? 'tool-card-highlight' : 'border-[var(--border)]'}`}
+      } ${highlighted ? 'tool-card-highlight' : ''}`}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div
-          className={`flex items-center justify-center rounded-lg bg-[var(--bg-muted)] text-[var(--accent)] transition group-hover:text-[var(--accent-hover)] ${
-            compact ? 'h-9 w-9' : 'h-10 w-10'
+          className={`flex items-center justify-center rounded-md bg-[var(--accent-soft)] text-[var(--accent)] transition-colors duration-200 ease-out group-hover:text-[var(--accent-hover)] ${
+            compact ? 'h-8 w-8' : 'h-9 w-9'
           }`}
         >
-          <Icon size={compact ? 18 : 20} strokeWidth={2} />
+          <Icon size={compact ? 18 : 20} strokeWidth={1.75} />
         </div>
-        <div className="flex items-center gap-1">
-          <FavoriteButton toolId={tool.id} favorite={favorite} onChange={setFavorite} />
-          <span className={`cat-dot cat-${tool.category}`} title={getCategoryLabel(tool.category)} />
-        </div>
+        <FavoriteButton
+          toolId={tool.id}
+          favorite={favorite}
+          onChange={setFavorite}
+          className={`transition-opacity duration-200 ${
+            favorite
+              ? 'opacity-100'
+              : 'opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100'
+          }`}
+        />
       </div>
 
-      <h3 className="mb-1 text-[15px] font-semibold tracking-tight text-[var(--text)] transition group-hover:text-[var(--accent)]">
+      <h3 className="mb-1 text-sm font-semibold tracking-tight text-[var(--text)] transition-colors duration-200 ease-out group-hover:text-[var(--accent)]">
         {tool.name}
       </h3>
-      <p className="line-clamp-2 flex-1 text-sm leading-relaxed text-[var(--text-muted)]">
+      <p className="line-clamp-2 flex-1 text-xs leading-relaxed text-[var(--text-muted)]">
         {tool.description}
       </p>
-
-      <div className="mt-3 flex items-center gap-1 text-xs font-medium text-[var(--accent)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-        打开
-        <ArrowUpRight size={13} />
-      </div>
     </Link>
   )
 })

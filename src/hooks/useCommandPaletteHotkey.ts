@@ -1,18 +1,21 @@
 import { useEffect } from 'react'
+import { isModK } from '@/lib/platform'
 
-function isModK(e: KeyboardEvent) {
-  return (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'
-}
-
-/** 注册全局 ⌘K / Ctrl+K 快捷键 */
-export function useCommandPaletteHotkey(onOpen: () => void) {
+/** 全局 ⌘K / Ctrl+K 快捷键 */
+export function useModKHotkey(onTrigger: () => void, enabled = true) {
   useEffect(() => {
+    if (!enabled) return
     const onKey = (e: KeyboardEvent) => {
       if (!isModK(e)) return
       e.preventDefault()
-      onOpen()
+      onTrigger()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onOpen])
+  }, [onTrigger, enabled])
+}
+
+/** 打开命令面板的 ⌘K / Ctrl+K 快捷键 */
+export function useCommandPaletteHotkey(onOpen: () => void, enabled = true) {
+  useModKHotkey(onOpen, enabled)
 }

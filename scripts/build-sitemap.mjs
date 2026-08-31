@@ -1,6 +1,6 @@
 /**
  * 从工具注册表与 .env 生成 SEO sitemap。
- * 输出到 public/，由 Vite 构建拷贝到 dist/。
+ * 输出到 public/，由 Vite 构建拷贝到 browser/。
  *
  * 生成文件：
  * - sitemap.xml        标准 URL 列表（Google / Bing 等）

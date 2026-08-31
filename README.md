@@ -9,25 +9,21 @@
 - **隐私优先**：计算、转换、哈希均在本地 Web Crypto / DOM API 中完成（IP 查询等少数工具除外）
 - **模块化架构**：每个工具独立组件，通过注册表统一管理，易于扩展
 - **开箱即用工具**：JSON、Base64、UUID、时间戳、哈希、JWT 等
-- **深色/浅色主题**：跟随系统偏好，可手动切换
-- **响应式布局**：桌面侧边栏 + 移动端适配
+- **深色/浅色主题**：默认跟随系统偏好，可手动切换并记住选择
+- **响应式布局**：首页分类胶囊横向滚动 + 命令面板（⌘K / Ctrl+K）快速跳转
 - **桌面客户端**：基于 Tauri 2 打包安装包
 
 ## 快速开始
 
 ```bash
 npm install -g pnpm
-git clone --recurse-submodules <repo-url>
+git clone --recurse-submodules <https://github.com/github/gitignore>
 # 若已 clone 但未拉取 submodule：git submodule update --init --recursive
 pnpm install
 pnpm run dev      # 开发服务器，默认 http://localhost:5173
-pnpm run build    # Web 生产构建，输出到 dist/
+pnpm run build    # Web 生产构建，输出到 browser/（见 build-out-dir.json）
 pnpm run preview  # 本地预览构建结果，默认 http://localhost:4173
 ```
-
-### gitignore 模板（submodule）
-
-`.gitignore 生成器` 的模板来自 [github/gitignore](https://github.com/github/gitignore)，以 submodule 形式放在 `vendor/gitignore/`。构建时会自动扫描并生成 `src/data/gitignore/` 下的 JSON 索引。
 
 ```bash
 # 更新官方模板到最新
@@ -46,13 +42,13 @@ pnpm run sync:gitignore
 ```typescript
 export default defineConfig({
   server: {
-    port: 3000,       // 开发端口
-    strictPort: false // true = 端口被占用时报错；false = 自动尝试下一个可用端口
+    port: 3000, // 开发端口
+    strictPort: false, // true = 端口被占用时报错；false = 自动尝试下一个可用端口
   },
   preview: {
-    port: 8080,       // npm run preview 的端口
+    port: 8080, // npm run preview 的端口
   },
-})
+});
 ```
 
 **方式二：命令行临时指定（不改配置文件）**
@@ -68,19 +64,27 @@ pnpm run preview -- --port 8080
 pnpm run dev -- --host 0.0.0.0 --port 3000
 ```
 
-
 ## Web 部署
 
-本项目是纯静态站点。执行 `pnpm run build` 后，`dist/` 目录即为可部署的完整产物。
+本项目是纯静态站点。执行 `pnpm run build` 后，`browser/` 目录即为可部署的完整产物。
 
-构建末尾会预渲染各工具页 HTML（`dist/tool/{id}/index.html`），写入：
+### 构建输出目录
+
+输出目录由根目录 [`build-out-dir.json`](build-out-dir.json) 统一配置（当前为 `browser`）。修改 `outDir` 后需同步：
+
+- `vite.config.ts` — 自动读取该文件
+- `scripts/lib/site-env.mjs` — 预渲染脚本自动读取
+- `src-tauri/tauri.conf.json` — 将 `build.frontendDist` 改为 `../<outDir>`
+- `.gitignore` — 确保忽略新的输出目录名
+
+构建末尾会预渲染各工具页 HTML（`browser/tool/{id}/index.html`），写入：
 
 - `<title>` / `<meta description>` / Open Graph / Twitter Card
 - 结构化正文（介绍 / 要点 / FAQ）与相关工具内链
 - JSON-LD（`WebApplication` + `BreadcrumbList` + 可选 `FAQPage`）
-- 分享图 `dist/og/home.png` 与 `dist/og/tool-{id}.png`（无 CJK 字体时回退为 SVG）
+- 分享图 `browser/og/home.png` 与 `browser/og/tool-{id}.png`（无 CJK 字体时回退为 SVG）
 
-增强文案维护在 `src/data/tool-seo.json`。部署时请上传**整个** `dist/`，不要只传首页。OG PNG 优先使用系统中文字体，也可将字体放到 `scripts/assets/fonts/` 或设置 `OG_FONT_PATH`。
+增强文案维护在 `src/data/tool-seo.json`。部署时请上传**整个** `browser/`，不要只传首页。OG PNG 优先使用系统中文字体，也可将字体放到 `scripts/assets/fonts/` 或设置 `OG_FONT_PATH`。
 
 ### 子路径部署
 
@@ -90,26 +94,26 @@ pnpm run dev -- --host 0.0.0.0 --port 3000
 VITE_BASE_PATH=/app/
 ```
 
-也可直接改 `src/config/base-path.ts` 中的 `DEFAULT_BASE_PATH`。构建后把 `dist/` 内容放到服务器的 `/app/` 目录，并配置 SPA 回退到 `/app/index.html`。
+也可直接改 `src/config/base-path.ts` 中的 `DEFAULT_BASE_PATH`。构建后把 `browser/` 内容放到服务器的 `/app/` 目录，并配置 SPA 回退到 `/app/index.html`。
 
 ### 部署前检查
 
 ```bash
 pnpm run build
-pnpm run preview   # 本地验证 dist/ 是否正常
+pnpm run preview   # 本地验证 browser/ 是否正常
 ```
 
 ## Tauri 桌面端（Windows）
 
 ### 环境要求
 
-| 依赖 | 说明 |
-|------|------|
-| [Node.js](https://nodejs.org/) | 与 Web 开发相同 |
-| [pnpm](https://pnpm.io/) | 包管理 |
-| [Rust](https://www.rust-lang.org/tools/install) | Tauri 后端编译 |
-| [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) ||
-| WebView2 | Windows 10/11 通常已内置 |
+| 依赖                                                                                    | 说明                     |
+| --------------------------------------------------------------------------------------- | ------------------------ |
+| [Node.js](https://nodejs.org/)                                                          | 与 Web 开发相同          |
+| [pnpm](https://pnpm.io/)                                                                | 包管理                   |
+| [Rust](https://www.rust-lang.org/tools/install)                                         | Tauri 后端编译           |
+| [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) |                          |
+| WebView2                                                                                | Windows 10/11 通常已内置 |
 
 安装 Rust 后执行 `rustup default stable`。
 
@@ -118,7 +122,6 @@ pnpm run preview   # 本地验证 dist/ 是否正常
 ```bash
 pnpm run tauri:dev
 ```
-
 
 ### 打包 Windows 安装包
 
@@ -133,13 +136,12 @@ pnpm run tauri:build
 
 ### Tauri 与 Web 构建差异（重要）
 
-| 项目 | Web (`pnpm run build`) | Tauri (`pnpm run tauri:build`) |
-|------|------------------------|--------------------------------|
-| `VITE_BASE_PATH` | 读取 `.env`，可设子路径 | **自动忽略**，强制 `base: './'` |
-| 静态资源路径 | 绝对或子路径 | 相对路径 `./assets/...` |
-| React Router | 可设 `basename` | `basename` 为空（根路由） |
-| 联网请求 | 浏览器 `fetch` | Tauri 环境走 `@tauri-apps/plugin-http` |
-
+| 项目             | Web (`pnpm run build`)  | Tauri (`pnpm run tauri:build`)         |
+| ---------------- | ----------------------- | -------------------------------------- |
+| `VITE_BASE_PATH` | 读取 `.env`，可设子路径 | **自动忽略**，强制 `base: './'`        |
+| 静态资源路径     | 绝对或子路径            | 相对路径 `./assets/...`                |
+| React Router     | 可设 `basename`         | `basename` 为空（根路由）              |
+| 联网请求         | 浏览器 `fetch`          | Tauri 环境走 `@tauri-apps/plugin-http` |
 
 ## 技术栈
 

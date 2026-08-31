@@ -1,6 +1,7 @@
 /**
  * 构建脚本共用：读取 .env / 规范站点路径
  */
+import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -9,7 +10,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const ROOT = path.resolve(__dirname, '../..')
 export const TOOLS_FILE = path.join(ROOT, 'src', 'data', 'tools.ts')
 export const ENV_FILE = path.join(ROOT, '.env')
-export const DIST_DIR = path.join(ROOT, 'dist')
+/** Vite build.outDir，与 build-out-dir.json 保持一致 */
+export const BUILD_OUT_DIR = JSON.parse(
+  readFileSync(path.join(ROOT, 'build-out-dir.json'), 'utf8'),
+).outDir
+/** @deprecated 使用 BUILD_OUT_DIR；保留别名供既有脚本引用 */
+export const BUILD_OUTPUT_DIR = path.join(ROOT, BUILD_OUT_DIR)
+export const DIST_DIR = BUILD_OUTPUT_DIR
 export const PUBLIC_DIR = path.join(ROOT, 'public')
 
 export const DEFAULT_SITE_ORIGIN = 'https://app.juhaozero.com'

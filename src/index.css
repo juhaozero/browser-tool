@@ -1,35 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
-  --color-brand-50: #ecfeff;
-  --color-brand-100: #cffafe;
-  --color-brand-200: #a5f3fc;
-  --color-brand-300: #67e8f9;
-  --color-brand-400: #22d3ee;
-  --color-brand-500: #06b6d4;
-  --color-brand-600: #0891b2;
-  --color-brand-700: #0e7490;
-  --color-brand-800: #155e75;
-  --color-brand-900: #164e63;
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
 }
 
 :root {
   color-scheme: light;
-  --bg: #f7f8fa;
+  --bg: #f8fafc;
   --bg-elevated: #ffffff;
-  --bg-muted: #eef0f4;
-  --border: #e2e5eb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --accent: #0e7490;
-  --accent-hover: #155e75;
-  --accent-soft: #ecfeff;
+  --bg-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-soft: #eff6ff;
   --success: #059669;
   --error: #dc2626;
-  --shadow-card: 0 1px 0 rgba(15, 23, 42, 0.04);
-  --shadow-card-hover: 0 1px 0 rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
   --cat-encode: #0f766e;
   --cat-format: #1d4ed8;
   --cat-generate: #b45309;
@@ -44,19 +42,17 @@
 
 .dark {
   color-scheme: dark;
-  --bg: #0b0f14;
-  --bg-elevated: #12181f;
-  --bg-muted: #1a222c;
-  --border: #2a3441;
-  --text: #e8eef4;
-  --text-muted: #8b9aab;
-  --accent: #22d3ee;
-  --accent-hover: #67e8f9;
-  --accent-soft: #083344;
+  --bg: #020617;
+  --bg-elevated: #0f172a;
+  --bg-muted: #1e293b;
+  --border: #1e293b;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-soft: #172554;
   --success: #34d399;
   --error: #f87171;
-  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.35);
-  --shadow-card-hover: 0 1px 0 rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.35);
   --cat-encode: #2dd4bf;
   --cat-format: #60a5fa;
   --cat-generate: #fbbf24;
@@ -87,11 +83,6 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   background-color: var(--bg);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-muted) 35%, var(--bg)) 0%,
-    var(--bg) 28%
-  );
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
@@ -124,14 +115,14 @@ body {
 .cat-game { --cat-color: var(--cat-game); }
 .cat-health { --cat-color: var(--cat-health); }
 
-/* 高亮卡片短暂脉冲 */
+/* 高亮卡片：边框提示，无发光 */
 @keyframes tool-highlight {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+    border-color: var(--border);
   }
   40% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+    border-color: var(--accent);
   }
 }
 
@@ -140,7 +131,6 @@ body {
   border-color: var(--accent) !important;
 }
 
-/* 分区进入 */
 @keyframes section-in {
   from {
     opacity: 0;
@@ -153,11 +143,20 @@ body {
 }
 
 .section-enter {
-  animation: section-in 0.35s ease-out both;
+  animation: section-in 0.2s ease-out both;
 }
 
-/* 首页卡片离屏时跳过绘制，减轻滚动/搜索时的主线程压力 */
 .tool-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 140px;
+}
+
+/* CategoryNav：横向滚动隐藏滚动条 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

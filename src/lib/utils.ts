@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react'
+import { readInitialDark, THEME_STORAGE_KEY } from '@/lib/theme'
 
-const STORAGE_KEY = 'browser-tool-theme'
-
-/** 深色/浅色主题切换，偏好持久化到 localStorage */
+/** 深色/浅色主题：无偏好时跟随系统，可手动切换并持久化 */
 export function useTheme() {
-  const [dark, setDark] = useState(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) return stored === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  const [dark, setDark] = useState(readInitialDark)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light')
+    localStorage.setItem(THEME_STORAGE_KEY, dark ? 'dark' : 'light')
   }, [dark])
+
+  // 用户未手动选择时，跟随系统主题变化
+  useEffect(() => {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY)
+    if (stored === 'dark' || stored === 'light') return
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = () => setDark(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   return { dark, toggle: () => setDark((v) => !v) }
 }
