@@ -1,11 +1,12 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Moon, Sun, Search } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTheme } from '@/lib/utils'
 import { modKShortcutLabel } from '@/lib/platform'
 import { CommandPalette } from '@/components/CommandPalette'
 import { useCommandPaletteHotkey } from '@/hooks/useCommandPaletteHotkey'
 import { useDocumentMeta } from '@/hooks/useDocumentMeta'
+import { getToolById } from '@/data/tools'
 
 const GITHUB_REPO = 'https://github.com/juhaozero/browser-tool'
 
@@ -31,6 +32,10 @@ export function Layout() {
   const [paletteSession, setPaletteSession] = useState(0)
   const isHome = location.pathname === '/'
   const shortcutLabel = modKShortcutLabel()
+  const immersive = useMemo(() => {
+    const toolId = location.pathname.match(/^\/tool\/([^/]+)/)?.[1]
+    return toolId ? getToolById(toolId)?.layout === 'immersive' : false
+  }, [location.pathname])
 
   const openPalette = useCallback(() => {
     setPaletteSession((n) => n + 1)
@@ -43,7 +48,11 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] backdrop-blur-sm">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div
+          className={`mx-auto flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 ${
+            immersive ? 'max-w-none' : 'max-w-6xl'
+          }`}
+        >
           <Link to="/" className="group flex min-w-0 items-center gap-2.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--border)] transition-all duration-200 ease-out group-hover:border-[var(--accent)]">
               <img
@@ -104,7 +113,13 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <main
+        className={
+          immersive
+            ? 'mx-auto w-full max-w-none px-3 py-3 sm:px-4 sm:py-4'
+            : 'mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10'
+        }
+      >
         <Outlet />
       </main>
 

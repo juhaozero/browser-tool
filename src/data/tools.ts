@@ -262,6 +262,7 @@ export const tools: ToolDefinition[] = [
     category: 'text',
     tags: ['diff', 'compare'],
     icon: GitCompare,
+    layout: 'immersive',
     component: lazyTool(() => import('@/tools/TextDiff')),
   },
   {
